@@ -55,11 +55,6 @@ export function buildHumanizationOptions(preferences, instructions = '') {
   const processingMode = PROCESSING_MODES[preferences.processingMode] || PROCESSING_MODES.instant;
   return {
     processingMode: processingMode.id,
-    processingProfile: {
-      rewriteDepth: processingMode.rewriteDepth,
-      semanticFidelity: processingMode.semanticFidelity,
-      preserveStructure: processingMode.preserveStructure
-    },
     writingMode: preferences.mode,
     language: preferences.language,
     instructions: String(instructions || '').trim(),

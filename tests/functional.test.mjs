@@ -28,8 +28,8 @@ test('modos do Humanizer 2.0 geram perfis distintos', () => {
   const advanced = buildHumanizationOptions({ ...base, processingMode: 'advanced' }, 'Préserver les dates.');
   const precise = buildHumanizationOptions({ ...base, processingMode: 'precise' }, 'Préserver les dates.');
   assert.equal(instant.processingMode, 'instant');
-  assert.equal(advanced.processingProfile.rewriteDepth, 'deep');
-  assert.equal(precise.processingProfile.semanticFidelity, 'maximum');
+  assert.equal(advanced.processingMode, 'advanced');
+  assert.equal(precise.processingMode, 'precise');
   assert.equal(instant.language, 'fr-FR');
   assert.equal(instant.instructions, 'Préserver les dates.');
 });

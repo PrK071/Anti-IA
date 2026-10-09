@@ -39,6 +39,7 @@ const state = {
   originalText: '',
   originalBackup: '',
   resultText: '',
+  resultOriginalText: '',
   instructions: '',
   processingStatus: 'empty',
   detectorStatus: 'idle',
@@ -185,6 +186,7 @@ function bindPreferenceControls() {
 
 async function requestHumanization() {
   if (state.isProcessing) return;
+  const requestOriginalText = state.originalText;
   try {
     state.isProcessing = true;
     activeHumanizationController = new AbortController();
@@ -196,7 +198,7 @@ async function requestHumanization() {
       limits: APP_CONFIG.textLimits,
       signal: activeHumanizationController.signal
     };
-    const response = await humanizeText(state.originalText, options);
+    const response = await humanizeText(requestOriginalText, options);
     state.lastRequest = response.request;
 
     if (response.status === 'error') {
@@ -217,7 +219,8 @@ async function requestHumanization() {
     }
     if (response.status === 'completed' && typeof response.output === 'string') {
       state.resultText = response.output;
-      state.lastComparison = analyzeTexts(state.originalText, state.resultText);
+      state.resultOriginalText = response.request?.text || requestOriginalText;
+      state.lastComparison = analyzeTexts(state.resultOriginalText, state.resultText);
       setStateStatus('completed');
       setResult(response.output);
     }
@@ -326,7 +329,7 @@ function bindEditor() {
   });
 
   elements.compareButton.addEventListener('click', () => {
-    if (!comparison.open(state.originalText, state.resultText)) {
+    if (!comparison.open(state.resultOriginalText, state.resultText)) {
       showToast('Comparação indisponível', 'São necessárias as versões original e humanizada.', 'error');
     }
   });
@@ -385,7 +388,8 @@ function initialize() {
     setHumanizedText: (text) => {
       if (typeof text !== 'string' || !text.trim()) throw new TypeError('O resultado deve ser um texto não vazio.');
       state.resultText = text.normalize('NFC');
-      state.lastComparison = analyzeTexts(state.originalText, state.resultText);
+      state.resultOriginalText = state.originalText;
+      state.lastComparison = analyzeTexts(state.resultOriginalText, state.resultText);
       setStateStatus('completed');
       setResult(state.resultText);
     },
