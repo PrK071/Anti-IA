@@ -1,3 +1,5 @@
+import { compareTexts as analyzeTexts } from './text-analysis.js';
+
 const tokenize = (text) => text.match(/\s+|[^\s]+/gu) || [];
 
 function buildDiff(original, revised) {
@@ -68,6 +70,7 @@ export function setupComparison() {
   const closeButton = document.querySelector('#closeCompareButton');
   const originalContainer = document.querySelector('#originalComparison');
   const humanizedContainer = document.querySelector('#humanizedComparison');
+  const metricsContainer = document.querySelector('#comparisonMetrics');
 
   closeButton.addEventListener('click', () => dialog.close());
   dialog.addEventListener('click', (event) => {
@@ -77,11 +80,41 @@ export function setupComparison() {
   return {
     open(original, humanized) {
       if (!original.trim() || !humanized.trim()) return false;
-      const diff = buildDiff(original, humanized);
+      const { diff, analysis } = compareTexts(original, humanized);
       renderParts(originalContainer, diff.originalParts);
       renderParts(humanizedContainer, diff.revisedParts);
+      renderMetrics(metricsContainer, analysis);
       dialog.showModal();
       return true;
     }
   };
+}
+
+function renderMetrics(container, analysis) {
+  const checks = analysis.checks;
+  const metrics = [
+    ['Palavras', `${analysis.original.words} → ${analysis.rewritten.words}`],
+    ['Volume', `${analysis.volumeChangePercent > 0 ? '+' : ''}${analysis.volumeChangePercent}%`],
+    ['Números', checks.numbers.preserved ? 'preservados' : `${checks.numbers.missing.length} ausente(s)`],
+    ['Datas', checks.dates.preserved ? 'preservadas' : `${checks.dates.missing.length} alterada(s)`],
+    ['Nomes', checks.properNames.preserved ? 'preservados' : `${checks.properNames.missing.length} ausente(s)`],
+    ['Termos', checks.technicalTerms.preserved ? 'preservados' : `${checks.technicalTerms.missing.length} ausente(s)`],
+    ['Referências', checks.references.preserved ? 'preservadas' : `${checks.references.missing.length} ausente(s)`],
+    ['Citações', checks.citations.preserved ? 'preservadas' : `${checks.citations.missing.length} ausente(s)`]
+  ];
+  container.replaceChildren();
+  metrics.forEach(([label, value]) => {
+    const item = document.createElement('span');
+    const title = document.createElement('small');
+    const result = document.createElement('strong');
+    title.textContent = label;
+    result.textContent = value;
+    item.append(title, result);
+    container.append(item);
+  });
+}
+
+/** Retorna diferenças visuais e verificações determinísticas, sem inferência semântica. */
+export function compareTexts(original, rewritten) {
+  return { diff: buildDiff(original, rewritten), analysis: analyzeTexts(original, rewritten) };
 }

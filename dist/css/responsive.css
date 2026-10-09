@@ -28,11 +28,12 @@
   .mode-card { min-height: 102px; padding: 16px 13px; }
   .selection-label, .shortcut-hint { display: none; }
   .settings-grid { grid-template-columns: 1fr; padding: 21px 18px 24px; }
+  .processing-mode-control, .instructions-control { grid-column: auto; }
   .summary-action > span { display: none; }
   .editor-section { margin-top: 42px; }
   .text-panel { min-height: 400px; border-radius: 18px; }
   .panel-header { padding: 0 15px; }
-  textarea, .output-content { padding: 19px; }
+  #originalText, .output-content { padding: 19px; }
   .output-actions .text-button span { display: none; }
   .primary-action-wrap { margin-top: 22px; }
   .humanize-button { width: 100%; }
@@ -41,7 +42,14 @@
   .compare-dialog { width: calc(100% - 20px); max-height: calc(100vh - 20px); }
   .dialog-header { padding: 20px; }
   .comparison-legend { padding: 12px 20px; }
+  .comparison-metrics { grid-template-columns: repeat(2, 1fr); }
+  .comparison-metrics > span { border-bottom: 1px solid var(--border); }
   .comparison-grid section { padding: 20px; }
+  .detector-disclaimer { align-items: flex-start; flex-direction: column; padding: 12px 20px; }
+  .detector-row { grid-template-columns: 1fr auto; gap: 7px 12px; padding: 16px 20px; }
+  .detector-row p { grid-column: 1 / -1; }
+  .tips-content { grid-template-columns: 1fr; }
+  .tips-content section { border-right: 0; padding: 19px 20px; }
 }
 
 @media (max-width: 390px) {

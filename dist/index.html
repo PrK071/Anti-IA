@@ -112,6 +112,16 @@
       </summary>
 
       <div class="settings-grid">
+        <fieldset class="setting-control processing-mode-control">
+          <legend>Modo do Humanizer 2.0</legend>
+          <div class="segmented-control">
+            <label><input type="radio" name="processingMode" value="instant" checked><span>Instantâneo</span></label>
+            <label><input type="radio" name="processingMode" value="advanced"><span>Avançado</span></label>
+            <label><input type="radio" name="processingMode" value="precise"><span>Preciso</span></label>
+          </div>
+          <small class="control-help" id="processingModeDescription">Ajustes moderados com prioridade para rapidez e clareza.</small>
+        </fieldset>
+
         <div class="setting-control range-control">
           <div class="setting-label"><label for="formality">Formalidade</label><output id="formalityValue" for="formality">Equilibrada</output></div>
           <input id="formality" type="range" min="0" max="100" step="25" value="50">
@@ -159,7 +169,21 @@
             <option value="pt-PT">Português (Portugal)</option>
             <option value="en-US">English (US)</option>
             <option value="es">Español</option>
+            <option value="fr-FR">Français</option>
+            <option value="de-DE">Deutsch</option>
+            <option value="it-IT">Italiano</option>
           </select>
+        </div>
+
+        <div class="setting-control instructions-control">
+          <div class="setting-label">
+            <label for="customInstructions">Instruções personalizadas <span>(opcional)</span></label>
+            <button class="text-button" id="tipsButton" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 22h4M8.5 14.5A6 6 0 1 1 15.5 14.5c-.9.7-1.2 1.3-1.3 2.5h-4.4c-.1-1.2-.4-1.8-1.3-2.5Z"/></svg>Dicas
+            </button>
+          </div>
+          <textarea id="customInstructions" rows="3" maxlength="1000" placeholder="Ex.: preserve números, referências e termos técnicos."></textarea>
+          <div class="range-legend"><span>Oriente o processamento futuro sem alterar o texto agora</span><span id="instructionsCount">0/1.000</span></div>
         </div>
       </div>
     </details>
@@ -174,17 +198,28 @@
         <article class="text-panel input-panel">
           <div class="panel-header">
             <div><span class="panel-dot violet"></span><h3>Texto original</h3></div>
-            <button class="text-button danger" id="clearButton" type="button" disabled>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 10v6M14 10v6"/></svg>Limpar
-            </button>
+            <div class="output-actions">
+              <button class="text-button" id="copyOriginalButton" type="button" disabled aria-label="Copiar texto original" title="Copiar original">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>Copiar</span>
+              </button>
+              <button class="text-button" id="restoreButton" type="button" disabled aria-label="Restaurar texto original" title="Restaurar texto removido">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg><span>Restaurar</span>
+              </button>
+              <button class="text-button" id="checkAIButton" type="button" aria-label="Verificar texto com detectores de IA" title="Verificar IA">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.6 2.9 8.1 7 10 4.1-1.9 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg><span>Verificar IA</span>
+              </button>
+              <button class="text-button danger" id="clearButton" type="button" disabled>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 10v6M14 10v6"/></svg><span>Limpar</span>
+              </button>
+            </div>
           </div>
           <label class="sr-only" for="originalText">Texto original para humanização</label>
-          <textarea id="originalText" spellcheck="true" placeholder="Cole ou escreva seu texto aqui…" maxlength="50000"></textarea>
+          <textarea id="originalText" spellcheck="true" placeholder="Cole ou escreva seu texto aqui…"></textarea>
           <div class="panel-footer">
             <span><strong id="wordCount">0</strong> palavras</span>
             <span class="footer-separator"></span>
             <span><strong id="characterCount">0</strong> caracteres</span>
-            <span class="character-limit">máx. 50.000</span>
+            <span class="character-limit" id="limitIndicator">limite técnico: 50.000 caracteres</span>
           </div>
         </article>
 
@@ -247,9 +282,41 @@
       </button>
     </div>
     <div class="comparison-legend"><span><i class="legend-removed"></i>Trecho removido</span><span><i class="legend-added"></i>Trecho adicionado</span></div>
+    <div class="comparison-metrics" id="comparisonMetrics" aria-label="Resumo determinístico das alterações"></div>
     <div class="comparison-grid">
       <section><h3>Original</h3><div id="originalComparison" class="comparison-text"></div></section>
       <section><h3>Humanizado</h3><div id="humanizedComparison" class="comparison-text"></div></section>
+    </div>
+  </dialog>
+
+  <dialog class="compare-dialog detector-dialog" id="detectorDialog" aria-labelledby="detectorTitle">
+    <div class="dialog-header">
+      <div><span class="eyebrow"><span></span> VERIFICADORES</span><h2 id="detectorTitle">Análise de autoria por IA</h2></div>
+      <button class="icon-button" id="closeDetectorButton" type="button" aria-label="Fechar verificadores">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <div class="detector-disclaimer">
+      <strong>Estimativas, não comprovação.</strong>
+      <span>Os serviços abaixo mantêm escalas próprias e ainda não estão conectados.</span>
+    </div>
+    <div class="detector-list" id="detectorResults"></div>
+  </dialog>
+
+  <dialog class="compare-dialog tips-dialog" id="tipsDialog" aria-labelledby="tipsTitle">
+    <div class="dialog-header">
+      <div><span class="eyebrow"><span></span> DICAS LOCAIS</span><h2 id="tipsTitle">Escreva instruções melhores</h2></div>
+      <button class="icon-button" id="closeTipsButton" type="button" aria-label="Fechar dicas">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <div class="tips-content">
+      <section><strong>Clareza</strong><p>Indique o público e peça frases diretas quando o texto estiver denso.</p></section>
+      <section><strong>Coerência</strong><p>Peça para preservar a ordem dos argumentos e melhorar apenas as transições.</p></section>
+      <section><strong>Gramática</strong><p>Especifique a variante do idioma e se termos regionais devem ser mantidos.</p></section>
+      <section><strong>Preservação</strong><p>Liste nomes, números, datas, citações ou referências que não podem ser alterados.</p></section>
+      <section><strong>Escolha do modo</strong><p>Use Instantâneo para ajustes rápidos, Avançado para estrutura e Preciso para máxima fidelidade.</p></section>
+      <section><strong>Organização</strong><p>Informe se títulos, listas e parágrafos devem permanecer nas posições originais.</p></section>
     </div>
   </dialog>
 

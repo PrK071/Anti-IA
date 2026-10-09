@@ -3,13 +3,15 @@ const STORAGE_KEY = 'avatar.preferences.v1';
 export const DEFAULT_PREFERENCES = Object.freeze({
   theme: 'dark',
   mode: 'natural',
+  processingMode: 'instant',
   formality: 50,
   creativity: 50,
   simplification: 'media',
   length: 'manter',
   preserveTerms: true,
   preserveParagraphs: true,
-  language: 'pt-BR'
+  language: 'pt-BR',
+  instructions: ''
 });
 
 export function loadPreferences() {
