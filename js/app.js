@@ -51,6 +51,7 @@ const state = {
 };
 
 const comparison = setupComparison();
+let activeHumanizationController = null;
 
 function getControls() {
   return {
@@ -186,12 +187,14 @@ async function requestHumanization() {
   if (state.isProcessing) return;
   try {
     state.isProcessing = true;
+    activeHumanizationController = new AbortController();
     setLoading(true);
     setStateStatus('processing');
 
     const options = {
       ...buildHumanizationOptions(state.preferences, state.instructions),
-      limits: APP_CONFIG.textLimits
+      limits: APP_CONFIG.textLimits,
+      signal: activeHumanizationController.signal
     };
     const response = await humanizeText(state.originalText, options);
     state.lastRequest = response.request;
@@ -204,7 +207,12 @@ async function requestHumanization() {
     }
     if (response.status === 'not_configured') {
       setStateStatus('not_configured', response.error);
-      showToast('Integração em preparação', response.error.message, 'info', 6000);
+      showToast('Configuração necessária', response.error.message, 'info', 6000);
+      return;
+    }
+    if (response.status === 'cancelled') {
+      setStateStatus('ready');
+      showToast('Processamento cancelado', 'O texto original foi preservado.', 'info');
       return;
     }
     if (response.status === 'completed' && typeof response.output === 'string') {
@@ -218,9 +226,16 @@ async function requestHumanization() {
     setStateStatus('error', { code: 'UNEXPECTED_ERROR', message: 'Ocorreu um erro inesperado.' });
     showToast('Não foi possível continuar', 'Ocorreu um erro inesperado. Tente novamente.', 'error');
   } finally {
+    activeHumanizationController = null;
     state.isProcessing = false;
     setLoading(false);
   }
+}
+
+function cancelHumanization() {
+  if (!state.isProcessing || !activeHumanizationController) return false;
+  activeHumanizationController.abort('cancelled');
+  return true;
 }
 
 async function requestDetectorCheck() {
@@ -317,6 +332,11 @@ function bindEditor() {
   });
 
   document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && state.isProcessing) {
+      event.preventDefault();
+      cancelHumanization();
+      return;
+    }
     if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
       event.preventDefault();
       requestHumanization();
@@ -361,6 +381,7 @@ function initialize() {
   window.AvatarApp = Object.freeze({
     getState: () => structuredClone(state),
     getConfiguration: () => structuredClone(APP_CONFIG),
+    cancelHumanization,
     setHumanizedText: (text) => {
       if (typeof text !== 'string' || !text.trim()) throw new TypeError('O resultado deve ser um texto não vazio.');
       state.resultText = text.normalize('NFC');

@@ -28,9 +28,9 @@
     </a>
 
     <div class="header-actions">
-      <div class="ai-status" role="status" aria-label="Status do motor de inteligência artificial: aguardando conexão">
+      <div class="ai-status" role="status" aria-label="Status do motor de inteligência artificial: conexão segura sob demanda">
         <span class="status-dot" aria-hidden="true"></span>
-        <span>IA aguardando conexão</span>
+        <span>IA via conexão segura</span>
       </div>
 
       <button class="icon-button" id="themeToggle" type="button" aria-label="Ativar tema claro" title="Alternar tema">
@@ -225,7 +225,7 @@
 
         <article class="text-panel output-panel">
           <div class="panel-header">
-            <div><span class="panel-dot blue"></span><h3>Texto humanizado</h3><span class="api-badge">AGUARDANDO IA</span></div>
+            <div><span class="panel-dot blue"></span><h3>Texto humanizado</h3><span class="api-badge">DEEPSEEK</span></div>
             <div class="output-actions">
               <button class="text-button" id="copyButton" type="button" disabled aria-label="Copiar texto humanizado">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>Copiar</span>
@@ -240,7 +240,7 @@
             <div class="empty-state" id="emptyState">
               <div class="empty-orb" aria-hidden="true"><span></span></div>
               <h4>Seu texto transformado aparecerá aqui</h4>
-              <p>O motor de IA ainda não está conectado. Assim que a integração estiver pronta, o resultado será exibido neste espaço.</p>
+              <p>Configure o serviço no ambiente da Vercel e humanize seu texto. O resultado será exibido neste espaço.</p>
             </div>
             <div class="result-text" id="resultText" tabindex="0" hidden></div>
           </div>
@@ -262,14 +262,14 @@
           <span class="button-loader" aria-hidden="true"></span>
           <span class="button-arrow" aria-hidden="true">→</span>
         </button>
-        <p><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Seu texto permanece neste navegador nesta etapa</p>
+        <p><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Processamento seguro pelo endpoint interno do AVATAR</p>
       </div>
     </section>
   </main>
 
   <footer class="app-footer">
-    <span>AVATAR <b>•</b> v1.0 frontend</span>
-    <span>Preparado para uma integração segura de IA</span>
+    <span>AVATAR <b>•</b> v1.1</span>
+    <span>Integração segura com IA via servidor</span>
   </footer>
 
   <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>

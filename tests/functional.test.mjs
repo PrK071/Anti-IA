@@ -34,12 +34,50 @@ test('modos do Humanizer 2.0 geram perfis distintos', () => {
   assert.equal(instant.instructions, 'Préserver les dates.');
 });
 
-test('humanização retorna serviço não configurado sem saída falsa', async () => {
-  const options = buildHumanizationOptions(DEFAULT_PREFERENCES, 'Preserve números.');
-  const result = await humanizeText('O valor é R$ 25,00.', options);
-  assert.equal(result.status, 'not_configured');
-  assert.equal(result.output, null);
-  assert.equal(result.error.code, 'AI_NOT_CONFIGURED');
+test('humanização envia somente dados públicos ao endpoint interno e aceita o resultado real', async () => {
+  const originalFetch = globalThis.fetch;
+  let captured;
+  globalThis.fetch = async (url, init) => {
+    captured = { url, init, body: JSON.parse(init.body) };
+    return new Response(JSON.stringify({
+      status: 'completed',
+      output: 'O valor permanece em R$ 25,00.',
+      model: 'deepseek-flash',
+      requestId: 'request-test-123'
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  };
+
+  try {
+    const options = buildHumanizationOptions(DEFAULT_PREFERENCES, 'Preserve números.');
+    const result = await humanizeText('O valor é R$ 25,00.', options);
+    assert.equal(result.status, 'completed');
+    assert.equal(result.output, 'O valor permanece em R$ 25,00.');
+    assert.equal(captured.url, '/api/humanize');
+    assert.equal(captured.init.method, 'POST');
+    assert.equal(captured.body.options.processingMode, 'instant');
+    assert.equal(captured.body.options.instructions, 'Preserve números.');
+    assert.equal('processingProfile' in captured.body.options, false);
+    assert.equal('limits' in captured.body.options, false);
+    assert.equal(JSON.stringify(captured.body).includes('DEEPSEEK_API_KEY'), false);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('humanização identifica configuração ausente sem criar saída', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({
+    status: 'error',
+    error: { code: 'SERVICE_NOT_CONFIGURED', message: 'O serviço de IA ainda não foi configurado no servidor.' }
+  }), { status: 503, headers: { 'Content-Type': 'application/json' } });
+  try {
+    const result = await humanizeText('Texto válido.', buildHumanizationOptions(DEFAULT_PREFERENCES));
+    assert.equal(result.status, 'not_configured');
+    assert.equal(result.output, null);
+    assert.equal(result.error.code, 'SERVICE_NOT_CONFIGURED');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test('humanização trata texto vazio como erro', async () => {

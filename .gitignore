@@ -1,0 +1,16 @@
+# Credenciais e configurações locais
+.env
+.env.*
+!.env.example
+
+# Vercel e dependências locais
+.vercel/
+node_modules/
+
+# Logs e arquivos temporários
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db

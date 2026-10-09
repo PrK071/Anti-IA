@@ -75,7 +75,7 @@ export function setLoading(isLoading) {
   elements.humanizeButton.classList.toggle('is-loading', isLoading);
   elements.humanizeButton.disabled = isLoading;
   elements.humanizeButton.setAttribute('aria-busy', String(isLoading));
-  elements.humanizeButton.querySelector('.button-label').textContent = isLoading ? 'Preparando…' : 'Humanizar texto';
+  elements.humanizeButton.querySelector('.button-label').textContent = isLoading ? 'Processando…' : 'Humanizar texto';
 }
 
 export function setProcessingStatus(status, detail = '') {
