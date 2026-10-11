@@ -6,6 +6,8 @@ import { validDetectionReport, segmentDetectionText } from '../js/detection-repo
 const text = 'A experiência de escrever envolve decisões sobre vocabulário, contexto e intenção. Cada revisão permite avaliar a clareza das ideias e a relação entre os argumentos. A autoria de um texto não pode ser comprovada apenas pelo estilo ou por sua correção gramatical.';
 const answer = { classification: 'mixed', confidence: 'low', scores: { human: 0.2, mixed: 0.7, ai: 0.1 }, summary: 'Há indícios mistos, mas a evidência é limitada.', highlighted_ids: [1] };
 const originalFetch = globalThis.fetch;
+const originalWarn = console.warn;
+let warnings;
 const envNames = ['DEEPSEEK_API_KEY', 'GPTZERO_API_KEY', 'AI_DETECTOR_PROVIDER', 'DEEPSEEK_MODEL', 'DEEPSEEK_DETECTOR_MODEL'];
 const previousEnv = Object.fromEntries(envNames.map((name) => [name, process.env[name]]));
 let ip = 20;
@@ -19,9 +21,12 @@ beforeEach(() => {
   envNames.forEach((name) => delete process.env[name]);
   process.env.DEEPSEEK_API_KEY = 'test-server-secret';
   globalThis.fetch = async () => providerResponse();
+  warnings = [];
+  console.warn = (...args) => warnings.push(args);
 });
 afterEach(() => {
   globalThis.fetch = originalFetch;
+  console.warn = originalWarn;
   envNames.forEach((name) => {
     if (previousEnv[name] === undefined) delete process.env[name];
     else process.env[name] = previousEnv[name];
@@ -57,6 +62,7 @@ test('DeepSeek retorna análise real via JSON e destaca somente posições do or
   assert.equal(captured.body.response_format.type, 'json_object');
   assert.equal(captured.body.model, 'deepseek-flash');
   assert.match(captured.body.messages[0].content, /dados não confiáveis/u);
+  assert.match(captured.body.messages[0].content, /Exemplo apenas de formato JSON/u);
   assert.equal(JSON.parse(captured.body.messages[1].content).document, text);
   const segment = segmentDetectionText(text)[1];
   assert.equal(text.slice(report.highlights[0].start, report.highlights[0].end), segment.text);
@@ -115,6 +121,71 @@ test('rejeita respostas inválidas, truncadas, scores impossíveis e IDs inexist
   assert.equal((await detect.fetch(request())).status, 502);
   globalThis.fetch = async () => new Response('not JSON');
   assert.equal((await detect.fetch(request())).status, 502);
+});
+
+test('recupera resposta inválida com uma única nova análise validada do mesmo documento', async () => {
+  const invalidResponses = [
+    () => new Response(JSON.stringify({ choices: [{ finish_reason: 'stop', message: { content: '' } }] })),
+    () => providerResponse(answer, 'length'),
+    () => new Response('not JSON'),
+    () => providerResponse({ ...answer, scores: { human: 0.9, mixed: 0.7, ai: 0.1 } }),
+    () => providerResponse({ ...answer, classification: 'ai' }),
+    () => providerResponse({ ...answer, highlighted_ids: [99999] })
+  ];
+  for (const invalid of invalidResponses) {
+    const calls = [];
+    globalThis.fetch = async (_, options) => {
+      calls.push(options);
+      return calls.length === 1 ? invalid() : providerResponse();
+    };
+    const response = await detect.fetch(request());
+    const report = await response.json();
+    assert.equal(response.status, 200);
+    assert.ok(validDetectionReport(report, text));
+    assert.deepEqual(report.scores, answer.scores);
+    assert.equal(calls.length, 2);
+    assert.equal(calls[0].signal, calls[1].signal, 'as tentativas compartilham o prazo e cancelamento');
+    const retryBody = JSON.parse(calls[1].body);
+    assert.match(retryBody.messages[0].content, /Uma tentativa anterior/u);
+    assert.equal(JSON.parse(retryBody.messages[1].content).document, text);
+  }
+  assert.equal(warnings.length, invalidResponses.length);
+  assert.equal(JSON.stringify(warnings).includes(text), false);
+  assert.equal(JSON.stringify(warnings).includes('test-server-secret'), false);
+});
+
+test('segunda resposta inválida encerra recuperação sem inventar relatório ou expor resposta', async () => {
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    return providerResponse({ ...answer, summary: '', private: 'private provider output' });
+  };
+  const response = await detect.fetch(request());
+  const body = await response.json();
+  assert.equal(response.status, 502);
+  assert.equal(body.error.code, 'INVALID_PROVIDER_RESPONSE');
+  assert.equal(calls, 2);
+  assert.equal(body.scores, undefined);
+  assert.equal(JSON.stringify([...warnings, body]).includes('private provider output'), false);
+  assert.deepEqual(warnings.map(([, metadata]) => metadata.issue), ['summary', 'summary']);
+});
+
+test('cancelar a tentativa de recuperação aborta o serviço sem uma terceira chamada', async () => {
+  const controller = new AbortController();
+  let calls = 0;
+  let started;
+  const gate = new Promise((resolve) => { started = resolve; });
+  globalThis.fetch = async (_, options) => {
+    calls += 1;
+    if (calls === 1) return providerResponse(answer, 'length');
+    started();
+    return new Promise((resolve, reject) => options.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true }));
+  };
+  const pending = detect.fetch(request({ signal: controller.signal }));
+  await gate;
+  controller.abort();
+  assert.equal((await pending).status, 504);
+  assert.equal(calls, 2);
 });
 
 test('falhas do provedor são traduzidas sem expor sua resposta', async () => {

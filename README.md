@@ -20,6 +20,8 @@ O botão **Verificar IA** consulta um endpoint real e exibe classificação huma
 
 Para usar DeepSeek, basta configurar `DEEPSEEK_API_KEY`, a mesma chave da humanização. A avaliação é feita pelo modelo: os percentuais são pesos subjetivos, sem calibração de detector. A interface identifica isso explicitamente.
 
+Se o DeepSeek retornar um relatório vazio, truncado ou fora do formato exigido, o servidor solicita uma nova análise uma única vez. As duas tentativas compartilham o limite total de 45 segundos e o cancelamento; a recuperação pode consumir uma segunda chamada à API. Erros de autenticação, créditos, limite do serviço e rede não são repetidos automaticamente. Os logs registram apenas a categoria da falha e o ID da solicitação, sem texto, resposta do modelo ou chave.
+
 Para usar o detector do GPTZero, configure `GPTZERO_API_KEY`. As probabilidades, classificação, confiança e destaques são os retornados pela API oficial. Isso não garante resultados idênticos a todas as versões, planos ou recursos do aplicativo GPTZero.
 
 | Variável | Uso na verificação |

@@ -28,14 +28,17 @@ function allowRequest(clientId) {
 
 function parseDeepSeek(data, segments) {
   const choice = data?.choices?.[0];
-  if (choice?.finish_reason !== 'stop' || typeof choice?.message?.content !== 'string') throw new Error('invalid');
-  const result = JSON.parse(choice.message.content);
-  if (!validScores(result.scores) || !['human', 'mixed', 'ai'].includes(result.classification)
-    || !['high', 'medium', 'low'].includes(result.confidence)
-    || typeof result.summary !== 'string' || !result.summary.trim() || result.summary.length > 3000
-    || !Array.isArray(result.highlighted_ids) || result.highlighted_ids.length > segments.length
-    || !result.highlighted_ids.every((id) => Number.isInteger(id) && id >= 0 && id < segments.length)
-    || result.scores[result.classification] < Math.max(...Object.values(result.scores))) throw new Error('invalid');
+  if (choice?.finish_reason !== 'stop') throw new Error('unfinished');
+  if (typeof choice?.message?.content !== 'string' || !choice.message.content.trim()) throw new Error('empty');
+  let result;
+  try { result = JSON.parse(choice.message.content); } catch { throw new Error('json'); }
+  if (!result || !validScores(result.scores)) throw new Error('scores');
+  if (!['human', 'mixed', 'ai'].includes(result.classification)
+    || result.scores[result.classification] < Math.max(result.scores.human, result.scores.mixed, result.scores.ai)) throw new Error('classification');
+  if (!['high', 'medium', 'low'].includes(result.confidence)) throw new Error('confidence');
+  if (typeof result.summary !== 'string' || !result.summary.trim() || result.summary.length > 3000) throw new Error('summary');
+  if (!Array.isArray(result.highlighted_ids) || result.highlighted_ids.length > segments.length
+    || !result.highlighted_ids.every((id) => Number.isInteger(id) && id >= 0 && id < segments.length)) throw new Error('highlights');
   return {
     scores: result.scores,
     classification: result.classification,
@@ -72,7 +75,7 @@ function parseGPTZero(data, text) {
   };
 }
 
-function deepseekBody(text, segments, model) {
+function deepseekBody(text, segments, model, retry = false) {
   return {
     model, response_format: { type: 'json_object' }, temperature: 0,
     thinking: { type: 'disabled' }, reasoning_effort: 'none', max_tokens: 4096, stream: false,
@@ -86,7 +89,10 @@ function deepseekBody(text, segments, model) {
       'Retorne somente JSON com classification (human|mixed|ai), confidence (high|medium|low),',
       'scores {human,mixed,ai} como pesos subjetivos entre 0 e 1 que somam 1; classification deve ser a categoria de maior peso;',
       'summary em português, com explicação sucinta dos indícios e limites; highlighted_ids como lista de IDs dos segmentos suspeitos.',
-      'Não invente trechos, IDs, números de perplexidade ou porcentagem de palavras geradas. Não afirme certeza de autoria.'
+      'Use no máximo 1200 caracteres no summary e cada ID no máximo uma vez. Se não houver indícios, use highlighted_ids: [].',
+      'Exemplo apenas de formato JSON (avalie o documento e não copie estes pesos): {"classification":"mixed","confidence":"low","scores":{"human":0.3,"mixed":0.4,"ai":0.3},"summary":"Indícios limitados; não é possível comprovar autoria.","highlighted_ids":[]}.',
+      'Não invente trechos, IDs, números de perplexidade ou porcentagem de palavras geradas. Não afirme certeza de autoria.',
+      ...(retry ? ['Uma tentativa anterior não produziu um relatório válido. Reavalie o documento e gere um novo JSON completo com exatamente os campos do exemplo. Confira a soma dos três pesos, a categoria de maior peso, os valores permitidos e os IDs existentes antes de responder.'] : [])
     ].join(' ') }, { role: 'user', content: JSON.stringify({ document: text, segments: segments.map(({ id, text: content }) => ({ id, text: content })) }) }]
   };
 }
@@ -119,17 +125,28 @@ async function handleDetect(request) {
   const configuredModel = process.env.DEEPSEEK_DETECTOR_MODEL || process.env.DEEPSEEK_MODEL;
   const model = provider.id === 'gptzero' ? 'GPTZero' : (['deepseek-flash', 'deepseek-v4-pro'].includes(configuredModel) ? configuredModel : 'deepseek-flash');
   try {
-    const response = await fetch(provider.id === 'gptzero' ? 'https://api.gptzero.me/v2/predict/text' : 'https://api.deepseek.com/chat/completions', {
-      method: 'POST', signal: controller.signal,
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...(provider.id === 'gptzero' ? { 'x-api-key': provider.key } : { Authorization: `Bearer ${provider.key}` }) },
-      body: JSON.stringify(provider.id === 'gptzero' ? { document: text } : deepseekBody(text, segments, model))
-    });
-    if (!response.ok) return providerErrorResponse(response.status, requestId, response.headers.get('retry-after'));
     let result;
-    try {
-      const data = await response.json();
-      result = provider.id === 'gptzero' ? parseGPTZero(data, text) : parseDeepSeek(data, segments);
-    } catch {
+    const attempts = provider.id === 'deepseek' ? 2 : 1;
+    for (let attempt = 0; attempt < attempts; attempt += 1) {
+      controller.signal.throwIfAborted();
+      const response = await fetch(provider.id === 'gptzero' ? 'https://api.gptzero.me/v2/predict/text' : 'https://api.deepseek.com/chat/completions', {
+        method: 'POST', signal: controller.signal,
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...(provider.id === 'gptzero' ? { 'x-api-key': provider.key } : { Authorization: `Bearer ${provider.key}` }) },
+        body: JSON.stringify(provider.id === 'gptzero' ? { document: text } : deepseekBody(text, segments, model, attempt > 0))
+      });
+      if (!response.ok) return providerErrorResponse(response.status, requestId, response.headers.get('retry-after'));
+      try {
+        const data = await response.json();
+        result = provider.id === 'gptzero' ? parseGPTZero(data, text) : parseDeepSeek(data, segments);
+        break;
+      } catch (error) {
+        if (controller.signal.aborted) throw error;
+        const issue = ['unfinished', 'empty', 'json', 'scores', 'classification', 'confidence', 'summary', 'highlights'].includes(error.message) ? error.message : 'schema';
+        // Log only diagnostic categories, never document text, model output or credentials.
+        console.warn('AI detection response rejected', { requestId, provider: provider.id, attempt: attempt + 1, issue });
+      }
+    }
+    if (!result) {
       return errorResponse(502, requestId, 'INVALID_PROVIDER_RESPONSE', 'O serviço retornou uma análise incompleta ou inválida. Tente novamente.');
     }
     return jsonResponse(200, { status: 'completed', requestId, provider: provider.id, model,
