@@ -20,7 +20,7 @@ export function validScores(scores) {
 
 export function validDetectionReport(report, text) {
   return report?.status === 'completed'
-    && ['deepseek', 'gptzero'].includes(report.provider)
+    && ['deepseek', 'gptzero', 'chatgpt'].includes(report.provider)
     && Object.hasOwn(DETECTION_LABELS, report.classification)
     && ['high', 'medium', 'low'].includes(report.confidence)
     && report.scoreKind === (report.provider === 'gptzero' ? 'detector_probability' : 'model_assessment')

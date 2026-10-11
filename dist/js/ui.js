@@ -143,9 +143,10 @@ export function renderDetectorResults(report, originalText = '') {
     return;
   }
   const isOfficial = report.provider === 'gptzero';
+  const modelProvider = report.provider === 'chatgpt' ? 'ChatGPT' : 'DeepSeek';
   const layout = detectorNode('div', 'detector-report');
   const summary = detectorNode('section', 'detector-summary');
-  summary.append(detectorNode('span', 'eyebrow', isOfficial ? 'GPTZERO · DETECTOR OFICIAL' : 'DEEPSEEK · AVALIAÇÃO DO MODELO'));
+  summary.append(detectorNode('span', 'eyebrow', isOfficial ? 'GPTZERO · DETECTOR OFICIAL' : `${modelProvider.toUpperCase()} · AVALIAÇÃO DO MODELO`));
   const headline = detectorNode('h3', 'detector-verdict', { human: 'Predominantemente humano', mixed: 'Indícios de autoria mista', ai: 'Indícios de geração por IA' }[report.classification]);
   headline.dataset.classification = report.classification;
   summary.append(headline, detectorNode('p', 'detector-explanation', report.summary));
@@ -165,7 +166,7 @@ export function renderDetectorResults(report, originalText = '') {
   }
   summary.append(scoreBar, scores, detectorNode('p', 'detector-note', isOfficial
     ? 'As porcentagens indicam a probabilidade de cada categoria, não a fração de palavras escritas por IA.'
-    : 'Pesos subjetivos gerados pelo DeepSeek, sem calibração como detector. Não representam probabilidades verificadas nem a fração de palavras escritas por IA.'));
+    : `Pesos subjetivos gerados pelo ${modelProvider}, sem calibração como detector. Não representam probabilidades verificadas nem a fração de palavras escritas por IA.`));
   const time = detectorNode('time', 'detector-meta', `Analisado em ${new Date(report.analyzedAt).toLocaleString('pt-BR')}`);
   time.dateTime = report.analyzedAt;
   summary.append(time);

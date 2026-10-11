@@ -90,7 +90,7 @@ function isNumberBetween(value, minimum, maximum) {
   return typeof value === 'number' && Number.isFinite(value) && value >= minimum && value <= maximum;
 }
 
-function validatePayload(payload) {
+export function validatePayload(payload) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
     return { error: ['INVALID_BODY', 'Envie um corpo JSON válido.'] };
   }
@@ -160,7 +160,7 @@ function formalityInstruction(value) {
   return 'Use alta formalidade, sem tornar o texto artificial ou excessivamente rebuscado.';
 }
 
-function buildMessages({ text, options }) {
+export function buildMessages({ text, options }) {
   const { adjustments } = options;
   const preserveTerms = adjustments.preserveTerms
     ? 'Preserve integralmente a terminologia técnica.'

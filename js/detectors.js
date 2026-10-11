@@ -1,10 +1,11 @@
 import { validateDetectionText, validDetectionReport } from './detection-report.js';
+import { APP_CONFIG } from '../config.js';
 
 export async function analyzeAuthorship(text, { limits, signal } = {}) {
   const validation = validateDetectionText(text, limits);
   if (!validation.valid) return { status: 'error', error: { code: validation.code, message: validation.message } };
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort('timeout'), 55_000);
+  const timeout = setTimeout(() => controller.abort('timeout'), APP_CONFIG.requestTimeoutMs || 55_000);
   const abort = () => controller.abort('cancelled');
   signal?.addEventListener('abort', abort, { once: true });
   if (signal?.aborted) abort();

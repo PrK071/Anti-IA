@@ -26,7 +26,7 @@ function allowRequest(clientId) {
   return true;
 }
 
-function parseDeepSeek(data, segments) {
+export function parseModelDetection(data, segments) {
   const choice = data?.choices?.[0];
   if (choice?.finish_reason !== 'stop') throw new Error('unfinished');
   if (typeof choice?.message?.content !== 'string' || !choice.message.content.trim()) throw new Error('empty');
@@ -75,11 +75,8 @@ function parseGPTZero(data, text) {
   };
 }
 
-function deepseekBody(text, segments, model, retry = false) {
-  return {
-    model, response_format: { type: 'json_object' }, temperature: 0,
-    thinking: { type: 'disabled' }, reasoning_effort: 'none', max_tokens: 4096, stream: false,
-    messages: [{ role: 'system', content: [
+export function buildDetectionMessages(text, segments, retry = false) {
+  return [{ role: 'system', content: [
       'Você é um avaliador de indícios linguísticos de geração ou edição por IA.',
       'Sua avaliação é subjetiva: você NÃO é GPTZero, não tem um detector calibrado e não consegue comprovar autoria.',
       'Analise o texto inteiro em contexto. Considere variedade sintática, especificidade, coerência, repetições e mudanças de estilo.',
@@ -93,7 +90,14 @@ function deepseekBody(text, segments, model, retry = false) {
       'Exemplo apenas de formato JSON (avalie o documento e não copie estes pesos): {"classification":"mixed","confidence":"low","scores":{"human":0.3,"mixed":0.4,"ai":0.3},"summary":"Indícios limitados; não é possível comprovar autoria.","highlighted_ids":[]}.',
       'Não invente trechos, IDs, números de perplexidade ou porcentagem de palavras geradas. Não afirme certeza de autoria.',
       ...(retry ? ['Uma tentativa anterior não produziu um relatório válido. Reavalie o documento e gere um novo JSON completo com exatamente os campos do exemplo. Confira a soma dos três pesos, a categoria de maior peso, os valores permitidos e os IDs existentes antes de responder.'] : [])
-    ].join(' ') }, { role: 'user', content: JSON.stringify({ document: text, segments: segments.map(({ id, text: content }) => ({ id, text: content })) }) }]
+    ].join(' ') }, { role: 'user', content: JSON.stringify({ document: text, segments: segments.map(({ id, text: content }) => ({ id, text: content })) }) }];
+}
+
+function deepseekBody(text, segments, model, retry = false) {
+  return {
+    model, response_format: { type: 'json_object' }, temperature: 0,
+    thinking: { type: 'disabled' }, reasoning_effort: 'none', max_tokens: 4096, stream: false,
+    messages: buildDetectionMessages(text, segments, retry)
   };
 }
 
@@ -137,7 +141,7 @@ async function handleDetect(request) {
       if (!response.ok) return providerErrorResponse(response.status, requestId, response.headers.get('retry-after'));
       try {
         const data = await response.json();
-        result = provider.id === 'gptzero' ? parseGPTZero(data, text) : parseDeepSeek(data, segments);
+        result = provider.id === 'gptzero' ? parseGPTZero(data, text) : parseModelDetection(data, segments);
         break;
       } catch (error) {
         if (controller.signal.aborted) throw error;

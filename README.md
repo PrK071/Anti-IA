@@ -4,6 +4,18 @@
 
 O AVATAR usa HTML, CSS e JavaScript Vanilla no navegador. A humanização é feita pelo DeepSeek por meio de uma Vercel Function; a chave da API permanece no servidor.
 
+## Versão local com sua assinatura ChatGPT
+
+O modo local usa o login oficial **Sign in with ChatGPT** e a cota do plano da conta elegível. Ele não lê `.env`, não usa chaves de APIs pagas e não muda de provedor quando a cota acaba. A integração requer Windows e Node.js 22 ou superior. Depois de instalar as dependências, execute `scripts/install-shortcut.ps1` para criar **AVATAR Local** na área de trabalho; o atalho inicia o serviço em `http://127.0.0.1:3187` e abre o navegador. Também é possível iniciar com `npm run local`.
+
+1. Clique em **Continue with ChatGPT** e autorize o uso do plano na página oficial.
+2. Abra **Gerenciar uso no ChatGPT**, encontre **AVATAR Local** e desative o uso de créditos após atingir o limite do plano. O ChatGPT controla essa opção; o AVATAR não tem uma API para verificá-la ou alterá-la. A interface exige sua confirmação antes de habilitar o processamento.
+3. Selecione um dos modelos retornados para sua conta e use o editor normalmente. A verificação continua sendo uma avaliação subjetiva do modelo, diferente do detector GPTZero.
+
+O login é armazenado em `.local/chatgpt.bin`, criptografado pelo Windows DPAPI para seu usuário. Tokens não são enviados ao JavaScript do navegador. O serviço aceita apenas conexões de loopback com a origem local, valida estado/PKCE/nonce e identidade assinada, renova o login quando necessário e descarta saídas incompletas. Desconectar remove as credenciais locais; para revogar também a permissão na OpenAI, use as configurações do ChatGPT. Após reiniciar o serviço ou entrar novamente, confirme novamente a configuração de créditos.
+
+Referências oficiais: [login e autorização](https://developers.openai.com/siwc/token-sharing-open-source/sign-in), [modelos e inferência](https://developers.openai.com/siwc/token-sharing-open-source/models-and-inference), [limites e uso de créditos](https://developers.openai.com/siwc/token-sharing-open-source/profiles-and-sessions).
+
 ## Recursos
 
 | Edição e análise | Humanização |

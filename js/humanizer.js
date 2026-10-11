@@ -2,7 +2,7 @@ import { APP_CONFIG, PROCESSING_MODES } from '../config.js';
 import { validateText } from './text-analysis.js';
 
 const HUMANIZE_ENDPOINT = '/api/humanize';
-const CLIENT_TIMEOUT_MS = 55_000;
+const CLIENT_TIMEOUT_MS = APP_CONFIG.requestTimeoutMs || 55_000;
 
 function createError(code, message) {
   return { code, message };

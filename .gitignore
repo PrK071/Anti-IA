@@ -6,6 +6,8 @@
 # Vercel e dependências locais
 .vercel/
 node_modules/
+.local/
+.runtime/
 test-results/
 playwright-report/
 
