@@ -1,0 +1,3 @@
+vendor/** -text
+dist/vendor/** -text
+tests/fixtures/* -text
