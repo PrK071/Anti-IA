@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { countWords, countText, validateText, compareTexts as analyzeTexts } from '../js/text-analysis.js';
 import { humanizeText, buildHumanizationOptions } from '../js/humanizer.js';
-import { checkAI, checkMultipleDetectors } from '../js/detectors.js';
+import { analyzeAuthorship } from '../js/detectors.js';
 import { compareTexts } from '../js/compare.js';
 import { DEFAULT_PREFERENCES, loadPreferences, savePreferences } from '../js/settings.js';
 
@@ -86,14 +86,10 @@ test('humanização trata texto vazio como erro', async () => {
   assert.equal(result.error.code, 'EMPTY_TEXT');
 });
 
-test('detectores preservam resultados separados e indisponíveis', async () => {
-  const single = await checkAI('Texto suficiente para análise.', 'gptzero');
-  assert.equal(single.status, 'not_configured');
-  assert.equal(single.result, null);
-  const report = await checkMultipleDetectors('Texto suficiente para análise.', ['gptzero', 'copyleaks', 'zerogpt', 'originality']);
-  assert.equal(report.status, 'not_configured');
-  assert.equal(report.results.length, 4);
-  assert.ok(report.results.every((item) => item.result === null && item.analyzedAt === null));
+test('análise rejeita texto curto antes de chamar o serviço', async () => {
+  const report = await analyzeAuthorship('Texto curto para análise.');
+  assert.equal(report.status, 'error');
+  assert.equal(report.error.code, 'TEXT_TOO_SHORT');
 });
 
 test('comparação detecta números, datas, nomes e volume sem alegar semântica', () => {

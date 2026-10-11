@@ -14,7 +14,37 @@ O AVATAR usa HTML, CSS e JavaScript Vanilla no navegador. A humanização é fei
 | Exportação do resultado em TXT | Instruções personalizadas e preservação de estrutura |
 | Tema claro e escuro | Estados de processamento, cancelamento e erros claros |
 
-Os verificadores de autoria por IA aparecem como **indisponíveis** até que seus serviços sejam integrados. Eles não exibem pontuações fictícias.
+O botão **Verificar IA** consulta um endpoint real e exibe classificação humano/misto/IA, as três categorias, explicação e trechos sinalizados. A análise usa DeepSeek ou a API oficial do GPTZero, conforme a configuração do servidor.
+
+## Ativar a análise de IA
+
+Para usar DeepSeek, basta configurar `DEEPSEEK_API_KEY`, a mesma chave da humanização. A avaliação é feita pelo modelo: os percentuais são pesos subjetivos, sem calibração de detector. A interface identifica isso explicitamente.
+
+Para usar o detector do GPTZero, configure `GPTZERO_API_KEY`. As probabilidades, classificação, confiança e destaques são os retornados pela API oficial. Isso não garante resultados idênticos a todas as versões, planos ou recursos do aplicativo GPTZero.
+
+| Variável | Uso na verificação |
+| --- | --- |
+| `AI_DETECTOR_PROVIDER` | `auto` por padrão: usa GPTZero se houver chave; caso contrário, DeepSeek. Também aceita `deepseek` ou `gptzero` para selecionar explicitamente. |
+| `DEEPSEEK_API_KEY` | Credencial do DeepSeek, usada exclusivamente no servidor. |
+| `DEEPSEEK_DETECTOR_MODEL` | Opcional: `deepseek-flash` ou `deepseek-v4-pro`. Na ausência, usa `DEEPSEEK_MODEL` ou `deepseek-flash`. |
+| `GPTZERO_API_KEY` | Credencial da API oficial do GPTZero; o login do aplicativo não substitui essa chave. |
+
+No site publicado, configure as variáveis no projeto da Vercel e faça um novo deploy. Sem chave, a interface informa a configuração necessária e não cria scores. A análise requer 250 caracteres, aceita até 50.000 e não comprova autoria. As porcentagens não representam a fração de palavras geradas por IA.
+
+A chave nunca vai para o navegador. O texto é enviado a `/api/detect` e ao provedor configurado somente ao solicitar a análise. Fechar a janela cancela a requisição. Validação, timeout, bloqueio de duplicatas e limite por instância protegem o endpoint; configure também rate limiting na Vercel para `/api/detect` em instalações públicas.
+
+## Importar documentos
+
+No painel **Texto original**, use **Importar arquivo**, arraste um documento para o campo ou cole um arquivo com `Ctrl+V` quando o navegador disponibilizar arquivos na área de transferência. A colagem normal de texto continua funcionando.
+
+- Formatos: PDF, DOCX, MD/Markdown, TXT, CSV e TSV.
+- Um arquivo por vez, até 20 MB e 50.000 caracteres de texto; PDFs aceitam até 300 páginas.
+- A extração ocorre no navegador. O arquivo original não é enviado ao servidor. O texto extraído entra no fluxo existente de humanização e verificação.
+- A importação substitui o campo. **Restaurar** recupera o texto anterior. Erros e edições feitas durante a leitura preservam o conteúdo atual.
+- PDFs precisam conter texto selecionável. PDFs digitalizados requerem OCR antes da importação; documentos protegidos precisam ser desbloqueados. Arquivos antigos `.doc` precisam ser convertidos para `.docx`.
+- Arquivos de texto aceitam UTF-8 e UTF-16 com BOM. A importação mantém o conteúdo textual, sem reproduzir a formatação visual ou executar HTML.
+
+Os leitores [PDF.js](https://mozilla.github.io/pdf.js/) e [Mammoth](https://github.com/mwilliamson/mammoth.js) são carregados somente quando necessários, a partir de `vendor/`, sem CDN. Suas licenças estão nas respectivas pastas. A versão em `dist/` também inclui a importação.
 
 ## Como funciona
 
@@ -52,11 +82,25 @@ Para proteger todas as instâncias, configure uma regra de **rate limiting na Ve
 
 Abra o projeto por um servidor local compatível com módulos JavaScript. Para testar também `/api/humanize`, use um ambiente local da Vercel com as variáveis configuradas. Os testes automatizados não precisam de uma chave real:
 
+O projeto também inclui um servidor local para o site e os dois endpoints. Copie `.env.example` para `.env`, preencha a chave diretamente nesse arquivo ignorado pelo Git, execute `npm run dev` e abra `http://127.0.0.1:3000`. Reinicie o servidor após alterar `.env`. Abrir `index.html` diretamente ou usar um servidor exclusivamente estático não executa as APIs.
+
 ```powershell
 node --test tests/*.test.mjs
 ```
 
 Os testes cobrem validação, modos, resposta do endpoint, tratamento de erros, cópia, exportação e recursos já existentes. Uma requisição real ao DeepSeek depende de uma credencial válida e de créditos disponíveis.
+
+Para instalar as ferramentas de desenvolvimento, atualizar as cópias locais das bibliotecas e executar os testes de importação no navegador, use Node.js 22.13 ou superior:
+
+```powershell
+npm ci
+npm run vendor
+npx playwright install chromium
+npm test
+npm run test:browser
+```
+
+Os testes de navegador cobrem PDFs e DOCX reais, seleção, arrastar, colar, restauração, limites, erros e edições durante a importação, além do relatório de IA, destaques, cancelamento e tratamento seguro de respostas. A suíte exercita a raiz e `dist/`, em desktop e celular. Os provedores são simulados nos testes; validar disponibilidade e qualidade reais exige uma chave configurada. O site publicado continua dispensando um comando de build.
 
 ## Licença
 

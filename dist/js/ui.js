@@ -1,7 +1,12 @@
 import { APP_CONFIG } from '../config.js';
 import { countText as analyzeCount, validateText } from './text-analysis.js';
+import { DETECTION_LABELS } from './detection-report.js';
 
 export const elements = {
+  inputPanel: document.querySelector('.input-panel'),
+  documentInput: document.querySelector('#documentInput'),
+  importDocumentButton: document.querySelector('#importDocumentButton'),
+  documentImportStatus: document.querySelector('#documentImportStatus'),
   originalText: document.querySelector('#originalText'),
   resultText: document.querySelector('#resultText'),
   emptyState: document.querySelector('#emptyState'),
@@ -75,7 +80,7 @@ export function setLoading(isLoading) {
   elements.humanizeButton.classList.toggle('is-loading', isLoading);
   elements.humanizeButton.disabled = isLoading;
   elements.humanizeButton.setAttribute('aria-busy', String(isLoading));
-  elements.humanizeButton.querySelector('.button-label').textContent = isLoading ? 'Preparando…' : 'Humanizar texto';
+  elements.humanizeButton.querySelector('.button-label').textContent = isLoading ? 'Processando…' : 'Humanizar texto';
 }
 
 export function setProcessingStatus(status, detail = '') {
@@ -109,24 +114,78 @@ export function setResult(text) {
   }
 }
 
-export function renderDetectorResults(report) {
-  elements.detectorResults.replaceChildren();
-  report.results.forEach((result) => {
-    const row = document.createElement('article');
-    row.className = 'detector-row';
+function detectorNode(tag, className, text) {
+  const node = document.createElement(tag);
+  node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
 
-    const name = document.createElement('h3');
-    name.textContent = result.name;
-    const status = document.createElement('span');
-    status.className = 'detector-status';
-    status.textContent = result.status === 'not_configured' ? 'Indisponível' : 'Erro';
-    const message = document.createElement('p');
-    message.textContent = result.error?.message || 'Nenhum resultado recebido.';
-    const time = document.createElement('time');
-    time.textContent = result.analyzedAt ? new Date(result.analyzedAt).toLocaleString('pt-BR') : 'Sem análise';
-    row.append(name, status, message, time);
-    elements.detectorResults.append(row);
-  });
+export function renderDetectorLoading() {
+  elements.detectorResults.replaceChildren();
+  elements.detectorResults.setAttribute('aria-busy', 'true');
+  const loading = detectorNode('div', 'detector-feedback');
+  loading.setAttribute('role', 'status');
+  loading.append(detectorNode('span', 'detector-spinner'), detectorNode('h3', '', 'Analisando seu texto…'),
+    detectorNode('p', '', 'A análise pode levar alguns segundos. Feche esta janela para cancelar.'));
+  elements.detectorResults.append(loading);
+}
+
+export function renderDetectorResults(report, originalText = '') {
+  elements.detectorResults.replaceChildren();
+  elements.detectorResults.setAttribute('aria-busy', 'false');
+  if (report.status !== 'completed') {
+    const feedback = detectorNode('div', 'detector-feedback');
+    feedback.setAttribute('role', 'alert');
+    feedback.append(detectorNode('h3', '', report.status === 'not_configured' ? 'Ative a análise no servidor' : 'A análise não foi concluída'),
+      detectorNode('p', '', report.error?.message || 'Tente novamente.'));
+    elements.detectorResults.append(feedback);
+    return;
+  }
+  const isOfficial = report.provider === 'gptzero';
+  const layout = detectorNode('div', 'detector-report');
+  const summary = detectorNode('section', 'detector-summary');
+  summary.append(detectorNode('span', 'eyebrow', isOfficial ? 'GPTZERO · DETECTOR OFICIAL' : 'DEEPSEEK · AVALIAÇÃO DO MODELO'));
+  const headline = detectorNode('h3', 'detector-verdict', { human: 'Predominantemente humano', mixed: 'Indícios de autoria mista', ai: 'Indícios de geração por IA' }[report.classification]);
+  headline.dataset.classification = report.classification;
+  summary.append(headline, detectorNode('p', 'detector-explanation', report.summary));
+  const confidence = { high: 'Alta', medium: 'Média', low: 'Baixa' }[report.confidence];
+  summary.append(detectorNode('p', 'detector-meta', `${isOfficial ? 'Confiança do detector' : 'Confiança declarada pelo modelo'}: ${confidence} · ${report.wordCount.toLocaleString('pt-BR')} palavras`));
+  summary.append(detectorNode('h4', '', isOfficial ? 'Probabilidades das categorias' : 'Pesos da avaliação do modelo'));
+  const scoreBar = detectorNode('div', 'detector-score-bar');
+  scoreBar.setAttribute('aria-hidden', 'true');
+  const scores = detectorNode('div', 'detector-scores');
+  for (const type of ['human', 'mixed', 'ai']) {
+    const piece = detectorNode('span', `score-${type}`);
+    piece.style.width = `${report.scores[type] * 100}%`;
+    scoreBar.append(piece);
+    const card = detectorNode('div', `detector-score score-${type}`);
+    card.append(detectorNode('span', '', DETECTION_LABELS[type]), detectorNode('strong', '', `${Math.round(report.scores[type] * 100)}%`));
+    scores.append(card);
+  }
+  summary.append(scoreBar, scores, detectorNode('p', 'detector-note', isOfficial
+    ? 'As porcentagens indicam a probabilidade de cada categoria, não a fração de palavras escritas por IA.'
+    : 'Pesos subjetivos gerados pelo DeepSeek, sem calibração como detector. Não representam probabilidades verificadas nem a fração de palavras escritas por IA.'));
+  const time = detectorNode('time', 'detector-meta', `Analisado em ${new Date(report.analyzedAt).toLocaleString('pt-BR')}`);
+  time.dateTime = report.analyzedAt;
+  summary.append(time);
+  const detail = detectorNode('section', 'detector-detail');
+  detail.append(detectorNode('h3', '', 'Trechos sinalizados'), detectorNode('p', 'detector-note', report.highlights.length
+    ? 'Os trechos destacados merecem revisão. O destaque não comprova uso de IA.'
+    : 'Nenhum trecho foi sinalizado nesta análise. Isso não comprova autoria humana.'));
+  const text = detectorNode('div', 'detector-text');
+  let cursor = 0;
+  for (const item of report.highlights) {
+    text.append(document.createTextNode(originalText.slice(cursor, item.start)));
+    const mark = detectorNode('mark', '', originalText.slice(item.start, item.end));
+    mark.title = item.reason;
+    text.append(mark);
+    cursor = item.end;
+  }
+  text.append(document.createTextNode(originalText.slice(cursor)));
+  detail.append(text);
+  layout.append(summary, detail);
+  elements.detectorResults.append(layout);
 }
 
 export function showToast(title, message, type = 'info', duration = 4600) {

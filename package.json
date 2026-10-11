@@ -1,0 +1,17 @@
+{
+  "name": "avatar",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "test:browser": "playwright test",
+    "vendor": "node scripts/vendor.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.0",
+    "mammoth": "1.13.0",
+    "pdfjs-dist": "6.4.299"
+  }
+}

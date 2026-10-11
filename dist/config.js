@@ -1,12 +1,10 @@
 export const APP_CONFIG = Object.freeze({
   textLimits: Object.freeze({
-    // Sem limite comercial nesta etapa. O teto de caracteres é apenas uma
-    // proteção técnica e pode ser alterado quando o backend for definido.
+    // Sem limite comercial. O mesmo teto técnico é validado novamente no servidor.
     maxWords: null,
     maxCharacters: 50000,
     warningThreshold: 0.9
   }),
-  detectors: Object.freeze(['gptzero', 'copyleaks', 'zerogpt', 'originality']),
   supportedLanguages: Object.freeze(['pt-BR', 'pt-PT', 'en-US', 'es', 'fr-FR', 'de-DE', 'it-IT'])
 });
 

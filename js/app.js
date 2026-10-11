@@ -1,7 +1,9 @@
 import { APP_CONFIG, PROCESSING_MODES } from '../config.js';
 import { humanizeText, buildHumanizationOptions } from './humanizer.js';
-import { checkMultipleDetectors } from './detectors.js';
+import { analyzeAuthorship } from './detectors.js';
+import { validateDetectionText } from './detection-report.js';
 import { setupComparison } from './compare.js';
+import { bindDocumentImport } from './document-import.js';
 import { validateText, compareTexts as analyzeTexts } from './text-analysis.js';
 import {
   DEFAULT_PREFERENCES,
@@ -20,6 +22,7 @@ import {
   setProcessingStatus,
   setResult,
   renderDetectorResults,
+  renderDetectorLoading,
   showToast,
   copyToClipboard,
   downloadText
@@ -43,7 +46,8 @@ const state = {
   instructions: '',
   processingStatus: 'empty',
   detectorStatus: 'idle',
-  detectorResults: [],
+  detectorReport: null,
+  detectorOriginalText: '',
   lastRequest: null,
   lastComparison: null,
   error: null,
@@ -53,6 +57,7 @@ const state = {
 
 const comparison = setupComparison();
 let activeHumanizationController = null;
+let activeDetectorController = null;
 
 function getControls() {
   return {
@@ -243,7 +248,7 @@ function cancelHumanization() {
 
 async function requestDetectorCheck() {
   if (state.isChecking) return;
-  const validation = validateText(state.originalText, APP_CONFIG.textLimits);
+  const validation = validateDetectionText(state.originalText, APP_CONFIG.textLimits);
   if (!validation.valid) {
     showToast('Texto necessário', validation.message, 'error');
     elements.originalText.focus();
@@ -253,24 +258,47 @@ async function requestDetectorCheck() {
   try {
     state.isChecking = true;
     state.detectorStatus = 'checking';
+    state.detectorReport = null;
+    state.detectorOriginalText = state.originalText;
+    activeDetectorController = new AbortController();
+    elements.checkAIButton.disabled = true;
     elements.checkAIButton.setAttribute('aria-busy', 'true');
-    const report = await checkMultipleDetectors(state.originalText, APP_CONFIG.detectors, { limits: APP_CONFIG.textLimits });
-    state.detectorStatus = report.status;
-    state.detectorResults = report.results;
-    renderDetectorResults(report);
+    renderDetectorLoading();
     elements.detectorDialog.showModal();
-    showToast('Verificadores indisponíveis', 'As integrações estão preparadas, mas nenhum provedor foi conectado.', 'info');
+    const report = await analyzeAuthorship(state.detectorOriginalText, { limits: APP_CONFIG.textLimits, signal: activeDetectorController.signal });
+    state.detectorStatus = report.status;
+    if (report.status === 'cancelled') return;
+    state.detectorReport = report;
+    renderDetectorResults(report, state.detectorOriginalText);
   } catch (error) {
     console.error(error);
     state.detectorStatus = 'error';
-    showToast('Falha na verificação', 'Não foi possível preparar os verificadores.', 'error');
+    renderDetectorResults({ status: 'error', error: { message: 'Não foi possível concluir a análise. Tente novamente.' } });
   } finally {
     state.isChecking = false;
+    activeDetectorController = null;
+    elements.checkAIButton.disabled = false;
     elements.checkAIButton.setAttribute('aria-busy', 'false');
   }
 }
 
 function bindEditor() {
+  bindDocumentImport({
+    panel: elements.inputPanel,
+    editor: elements.originalText,
+    input: elements.documentInput,
+    button: elements.importDocumentButton,
+    status: elements.documentImportStatus,
+    onMessage: showToast,
+    onImport: (text) => {
+      if (state.originalText) state.originalBackup = state.originalText;
+      state.originalText = text;
+      elements.originalText.value = text;
+      elements.restoreButton.disabled = !state.originalBackup;
+      updateInputState();
+    }
+  });
+
   elements.originalText.addEventListener('input', () => {
     state.originalText = elements.originalText.value;
     updateInputState();
@@ -348,6 +376,7 @@ function bindEditor() {
 }
 
 function bindDialogs() {
+  elements.detectorDialog.addEventListener('close', () => activeDetectorController?.abort());
   const closeDialog = (dialog) => dialog.open && dialog.close();
   document.querySelector('#closeDetectorButton').addEventListener('click', () => closeDialog(elements.detectorDialog));
   document.querySelector('#closeTipsButton').addEventListener('click', () => closeDialog(elements.tipsDialog));

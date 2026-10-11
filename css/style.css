@@ -224,6 +224,13 @@ select { width: 100%; height: 39px; padding: 0 36px 0 12px; border: 1px solid va
 .text-button.danger:not(:disabled):hover { color: var(--danger); }
 .text-button:disabled { cursor: not-allowed; opacity: .36; }
 .output-actions { gap: 2px !important; }
+.input-panel .panel-header { flex-wrap: wrap; padding-top: 12px; padding-bottom: 12px; }
+.input-panel .output-actions { flex-wrap: wrap; }
+.input-panel.is-dragging { border-color: var(--violet-bright); background: var(--violet-soft); box-shadow: inset 0 0 0 2px var(--violet); }
+.document-import-help { display: flex; flex-direction: column; gap: 5px; padding: 12px 24px 0; color: var(--text-muted); font-size: 10px; line-height: 1.6; }
+#documentImportStatus { overflow-wrap: anywhere; color: var(--text-soft); }
+#documentImportStatus:empty { display: none; }
+#documentImportStatus.is-error { color: var(--danger); }
 #originalText { width: 100%; min-height: 0; flex: 1; padding: 23px 24px; resize: none; border: 0; outline: 0; background: transparent; color: var(--text); font-family: var(--font-body); font-size: 14px; line-height: 1.8; }
 #originalText::placeholder { color: var(--text-muted); }
 .panel-footer { display: flex; min-height: 48px; align-items: center; gap: 8px; padding: 0 20px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 10px; }
@@ -303,6 +310,29 @@ select { width: 100%; height: 39px; padding: 0 36px 0 12px; border: 1px solid va
 .detector-disclaimer { display: flex; align-items: center; gap: 9px; padding: 13px 27px; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 10px; }
 .detector-disclaimer strong { color: #e8ae65; font-weight: 600; }
 .detector-list { display: grid; max-height: 64vh; overflow: auto; }
+.detector-report { display: grid; grid-template-columns: minmax(260px, .8fr) minmax(0, 1.2fr); }
+.detector-summary, .detector-detail { min-width: 0; padding: 26px; }
+.detector-summary { background: var(--surface-muted); border-right: 1px solid var(--border); }
+.detector-verdict { margin: 12px 0; font-family: var(--font-display); font-size: 26px; line-height: 1.2; letter-spacing: -.03em; }
+.detector-explanation { color: var(--text-soft); font-size: 12px; line-height: 1.7; }
+.detector-meta, .detector-note { display: block; color: var(--text-muted); font-size: 10px; line-height: 1.6; }
+.detector-summary h4, .detector-detail h3 { margin: 22px 0 12px; font-family: var(--font-display); font-size: 13px; }
+.detector-detail h3 { margin-top: 0; }
+.detector-score-bar { display: flex; height: 9px; margin-bottom: 16px; overflow: hidden; border-radius: 9px; background: var(--border); }
+.score-human { --score-color: var(--success); }
+.score-mixed { --score-color: #e8ae65; }
+.score-ai { --score-color: var(--violet-bright); }
+.detector-score-bar span { background: var(--score-color); }
+.detector-scores { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.detector-score { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--border); border-radius: 11px; }
+.detector-score span { color: var(--text-soft); font-size: 11px; }
+.detector-score strong { color: var(--score-color); font-family: var(--font-display); font-size: 23px; }
+.detector-text { margin-top: 20px; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text-soft); font-size: 13px; line-height: 1.95; }
+.detector-text mark { padding: 3px 1px; border-radius: 3px; background: rgba(232, 174, 101, .24); color: var(--text); }
+.detector-feedback { padding: 45px 27px; text-align: center; }
+.detector-feedback h3 { font-size: 19px; }
+.detector-feedback p { margin: 12px auto; max-width: 600px; color: var(--text-soft); font-size: 12px; line-height: 1.8; }
+.detector-spinner { display: inline-block; width: 28px; height: 28px; border: 2px solid var(--border); border-top-color: var(--violet); border-radius: 50%; animation: orbit 1s linear infinite; }
 .detector-row { display: grid; grid-template-columns: minmax(130px, .8fr) minmax(120px, .7fr) minmax(180px, 1.5fr) minmax(100px, .7fr); align-items: center; gap: 16px; padding: 17px 27px; border-bottom: 1px solid var(--border); }
 .detector-row:last-child { border-bottom: 0; }
 .detector-row h3 { margin: 0; font-family: var(--font-display); font-size: 12px; }

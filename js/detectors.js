@@ -1,53 +1,39 @@
-import { APP_CONFIG } from '../config.js';
-import { validateText } from './text-analysis.js';
+import { validateDetectionText, validDetectionReport } from './detection-report.js';
 
-export const DETECTOR_PROVIDERS = Object.freeze({
-  gptzero: Object.freeze({ id: 'gptzero', name: 'GPTZero' }),
-  copyleaks: Object.freeze({ id: 'copyleaks', name: 'Copyleaks' }),
-  zerogpt: Object.freeze({ id: 'zerogpt', name: 'ZeroGPT' }),
-  originality: Object.freeze({ id: 'originality', name: 'Originality.ai' })
-});
-
-function createResult(provider, status, overrides = {}) {
-  const definition = DETECTOR_PROVIDERS[provider] || { id: provider, name: provider };
-  return {
-    provider: definition.id,
-    name: definition.name,
-    status,
-    result: null,
-    scale: null,
-    methodology: null,
-    analyzedAt: null,
-    error: null,
-    notes: [],
-    ...overrides
-  };
-}
-
-/** Um detector sempre preserva a escala original do provedor, sem normalização universal. */
-export async function checkAI(text, provider, options = {}) {
-  const validation = validateText(text, options.limits || APP_CONFIG.textLimits);
-  if (!validation.valid) {
-    return createResult(provider, 'error', { error: { code: validation.code, message: validation.message } });
+export async function analyzeAuthorship(text, { limits, signal } = {}) {
+  const validation = validateDetectionText(text, limits);
+  if (!validation.valid) return { status: 'error', error: { code: validation.code, message: validation.message } };
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort('timeout'), 55_000);
+  const abort = () => controller.abort('cancelled');
+  signal?.addEventListener('abort', abort, { once: true });
+  if (signal?.aborted) abort();
+  try {
+    const response = await fetch('/api/detect', {
+      method: 'POST', credentials: 'same-origin', signal: controller.signal,
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+    let report;
+    try { report = await response.json(); } catch { report = null; }
+    if (!response.ok) {
+      const error = typeof report?.error?.code === 'string' && typeof report?.error?.message === 'string'
+        ? report.error
+        : { code: 'SERVICE_UNAVAILABLE', message: response.status === 404
+          ? 'O servidor de análise não está disponível. Abra o projeto com npm run dev ou publique o endpoint /api/detect.'
+          : 'O serviço de análise não respondeu como esperado.' };
+      return { status: error.code === 'DETECTOR_NOT_CONFIGURED' ? 'not_configured' : 'error', error };
+    }
+    if (!validDetectionReport(report, text)) return { status: 'error', error: { code: 'INVALID_RESPONSE', message: 'A análise recebida é inválida. Tente novamente.' } };
+    return report;
+  } catch {
+    return controller.signal.aborted && controller.signal.reason !== 'timeout'
+      ? { status: 'cancelled' }
+      : { status: 'error', error: { code: controller.signal.aborted ? 'CLIENT_TIMEOUT' : 'NETWORK_ERROR', message: controller.signal.aborted
+        ? 'A análise excedeu o tempo de espera. Tente novamente.'
+        : 'Não foi possível acessar a análise. Verifique sua conexão e tente novamente.' } };
+  } finally {
+    clearTimeout(timeout);
+    signal?.removeEventListener('abort', abort);
   }
-  if (!DETECTOR_PROVIDERS[provider]) {
-    return createResult(provider, 'error', { error: { code: 'UNKNOWN_PROVIDER', message: 'Provedor de verificação desconhecido.' } });
-  }
-  return createResult(provider, 'not_configured', {
-    error: { code: 'DETECTOR_NOT_CONFIGURED', message: 'Integração ainda não configurada.' },
-    notes: ['Nenhum texto foi enviado a serviços externos.']
-  });
-}
-
-export async function checkMultipleDetectors(text, providers = APP_CONFIG.detectors, options = {}) {
-  const selected = [...new Set(providers)];
-  const results = await Promise.all(selected.map((provider) => checkAI(text, provider, options)));
-  const validation = validateText(text, options.limits || APP_CONFIG.textLimits);
-  return {
-    status: results.some((result) => result.status === 'error') ? 'error' : 'not_configured',
-    analyzedAt: null,
-    wordCount: validation.counts.words,
-    results,
-    disclaimer: 'Detectores de IA fornecem estimativas, não comprovação definitiva de autoria.'
-  };
 }

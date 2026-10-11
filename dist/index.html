@@ -199,6 +199,9 @@
           <div class="panel-header">
             <div><span class="panel-dot violet"></span><h3>Texto original</h3></div>
             <div class="output-actions">
+              <button class="text-button" id="importDocumentButton" type="button" aria-label="Importar documento" title="Importar arquivo">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M12 18v-6m-3 3 3-3 3 3"/></svg><span>Importar arquivo</span>
+              </button>
               <button class="text-button" id="copyOriginalButton" type="button" disabled aria-label="Copiar texto original" title="Copiar original">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>Copiar</span>
               </button>
@@ -213,8 +216,13 @@
               </button>
             </div>
           </div>
-          <label class="sr-only" for="originalText">Texto original para humanização</label>
-          <textarea id="originalText" spellcheck="true" placeholder="Cole ou escreva seu texto aqui…"></textarea>
+          <input id="documentInput" type="file" accept=".pdf,.docx,.md,.markdown,.txt,.csv,.tsv" hidden>
+          <div class="document-import-help">
+            <span id="documentImportHint">Importe, arraste ou cole um arquivo: PDF, DOCX, MD, TXT, CSV ou TSV · até 20 MB</span>
+            <span id="documentImportStatus" role="status" aria-live="polite" aria-atomic="true"></span>
+          </div>
+          <label class="sr-only" for="originalText">Texto original para verificar IA ou humanizar</label>
+          <textarea id="originalText" spellcheck="true" aria-describedby="documentImportHint documentImportStatus" placeholder="Cole ou escreva seu texto aqui… ou arraste um documento."></textarea>
           <div class="panel-footer">
             <span><strong id="wordCount">0</strong> palavras</span>
             <span class="footer-separator"></span>
@@ -291,16 +299,16 @@
 
   <dialog class="compare-dialog detector-dialog" id="detectorDialog" aria-labelledby="detectorTitle">
     <div class="dialog-header">
-      <div><span class="eyebrow"><span></span> VERIFICADORES</span><h2 id="detectorTitle">Análise de autoria por IA</h2></div>
+      <div><span class="eyebrow"><span></span> VERIFICAR IA</span><h2 id="detectorTitle">Análise de autoria por IA</h2></div>
       <button class="icon-button" id="closeDetectorButton" type="button" aria-label="Fechar verificadores">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
       </button>
     </div>
     <div class="detector-disclaimer">
       <strong>Estimativas, não comprovação.</strong>
-      <span>Os serviços abaixo mantêm escalas próprias e ainda não estão conectados.</span>
+      <span>A análise pode errar. Revise os indícios antes de concluir sobre a autoria.</span>
     </div>
-    <div class="detector-list" id="detectorResults"></div>
+    <div class="detector-list" id="detectorResults" aria-live="polite" aria-busy="false"></div>
   </dialog>
 
   <dialog class="compare-dialog tips-dialog" id="tipsDialog" aria-labelledby="tipsTitle">

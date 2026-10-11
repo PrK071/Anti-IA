@@ -5,7 +5,6 @@ export const APP_CONFIG = Object.freeze({
     maxCharacters: 50000,
     warningThreshold: 0.9
   }),
-  detectors: Object.freeze(['gptzero', 'copyleaks', 'zerogpt', 'originality']),
   supportedLanguages: Object.freeze(['pt-BR', 'pt-PT', 'en-US', 'es', 'fr-FR', 'de-DE', 'it-IT'])
 });
 

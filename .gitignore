@@ -6,6 +6,8 @@
 # Vercel e dependências locais
 .vercel/
 node_modules/
+test-results/
+playwright-report/
 
 # Logs e arquivos temporários
 *.log
