@@ -9,7 +9,7 @@ import humanize from '../api/humanize.mjs';
 if (existsSync('.env')) process.loadEnvFile('.env');
 const root = resolve('.');
 const port = Number(process.env.PORT || 3000);
-const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.wasm': 'application/wasm' };
+const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.wasm': 'application/wasm' };
 const routes = { '/api/detect': detect, '/api/humanize': humanize };
 
 createServer(async (incoming, outgoing) => {

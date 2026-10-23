@@ -66,7 +66,7 @@ let lockedControls = [];
 
 function lockArticleControls(locked) {
   if (locked) {
-    lockedControls = [...document.querySelectorAll('input, select, textarea, #importDocumentButton, #clearButton, #restoreButton, #checkAIButton, #resumeArticle, #forgetArticle')]
+    lockedControls = [...document.querySelectorAll('input, select, textarea, #importDocumentButton, #clearButton, #restoreButton, #checkAIButton, #resumeArticle, #forgetArticle, #pasteTextButton, #sampleTextButton, #uploadDocumentButton, #rewriteSelectionButton, #undoSelectionButton')]
       .map(control => ({ control, disabled: control.disabled }));
     for (const { control } of lockedControls) control.disabled = true;
   } else {
@@ -101,6 +101,7 @@ function getControls() {
 function persist() {
   state.preferences.instructions = state.instructions;
   savePreferences(state.preferences);
+  syncRewriteProfile();
 }
 
 function setStateStatus(status, error = null) {
@@ -110,6 +111,8 @@ function setStateStatus(status, error = null) {
 }
 
 function updateInputState() {
+  const helpers = document.querySelector('#inputHelpers');
+  if (helpers) helpers.hidden = Boolean(state.originalText.trim());
   const validation = updateCounters(state.originalText, APP_CONFIG.textLimits);
   if (validation.code === 'EMPTY_TEXT') setStateStatus('empty');
   else if (!validation.valid) setStateStatus('error', { code: validation.code, message: validation.message });
@@ -461,12 +464,137 @@ function bindHeader() {
   });
 }
 
+function syncRewriteProfile() {
+  const select = document.querySelector('#rewriteProfile');
+  if (!select) return;
+  const { mode, processingMode } = state.preferences;
+  select.value = mode === 'academico' && processingMode === 'advanced' ? 'academic'
+    : mode === 'natural' && processingMode === 'advanced' ? 'fluent'
+    : mode === 'natural' && processingMode === 'instant' ? 'natural' : 'custom';
+}
+
+function bindStudio() {
+  const sample = 'As bibliotecas públicas oferecem espaços de estudo e acesso a livros que muitas famílias não conseguem comprar. Também disponibilizam computadores e atividades culturais. Para atender bem a comunidade, precisam de horários claros, equipes preparadas e materiais atualizados. Os recursos digitais ampliam o alcance desses serviços, mas não substituem o espaço físico. Ouvir os moradores ajuda a definir prioridades e melhorar o atendimento. Pequenas mudanças, como sinalização acessível e áreas silenciosas, podem tornar esses espaços mais acolhedores.';
+  const replaceInput = text => {
+    if (state.isProcessing) return;
+    state.originalBackup = state.originalText;
+    state.originalText = String(text);
+    elements.originalText.value = state.originalText;
+    elements.restoreButton.disabled = !state.originalBackup;
+    updateInputState();
+    elements.originalText.focus();
+  };
+  document.querySelector('#sampleTextButton')?.addEventListener('click', () => replaceInput(sample));
+  document.querySelector('#pasteTextButton')?.addEventListener('click', async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text.trim()) return showToast('Área de transferência vazia', 'Copie um texto antes de colar.', 'info');
+      replaceInput(text);
+    } catch {
+      elements.originalText.focus();
+      showToast('Cole no editor', 'Use Ctrl+V ou o comando Colar do seu dispositivo.', 'info');
+    }
+  });
+  document.querySelector('#uploadDocumentButton')?.addEventListener('click', () => {
+    if (!state.isProcessing) elements.importDocumentButton.click();
+  });
+  document.querySelector('#rewriteProfile')?.addEventListener('change', event => {
+    const presets = { natural: ['natural', 'instant'], fluent: ['natural', 'advanced'], academic: ['academico', 'advanced'] };
+    const preset = presets[event.target.value];
+    if (!preset || state.isProcessing) return;
+    [state.preferences.mode, state.preferences.processingMode] = preset;
+    restorePreferences();
+    persist();
+  });
+  syncRewriteProfile();
+
+  const rewrite = document.querySelector('#rewriteSelectionButton');
+  const undo = document.querySelector('#undoSelectionButton');
+  if (!rewrite || !undo) return;
+  let selected = null;
+  let previous = null;
+  let previousOutput = null;
+  const updateSelection = () => {
+    const selection = window.getSelection();
+    if (selection?.rangeCount && !selection.isCollapsed) {
+      const range = selection.getRangeAt(0);
+      if (elements.resultText.contains(range.startContainer) && elements.resultText.contains(range.endContainer)) {
+        const prefix = range.cloneRange();
+        prefix.selectNodeContents(elements.resultText);
+        prefix.setEnd(range.startContainer, range.startOffset);
+        const raw = range.toString();
+        const start = prefix.toString().length + raw.length - raw.trimStart().length;
+        const end = prefix.toString().length + raw.trimEnd().length;
+        selected = { start, end, snapshot: state.resultText };
+      } else selected = null;
+    } else selected = null;
+    rewrite.disabled = state.isProcessing || !selected || selected.snapshot !== state.resultText
+      || selected.end <= selected.start || selected.end - selected.start > 6000;
+  };
+  document.addEventListener('selectionchange', updateSelection);
+  rewrite.addEventListener('pointerdown', event => event.preventDefault());
+  rewrite.addEventListener('click', async () => {
+    if (rewrite.disabled || !selected || state.isProcessing) return;
+    const { start, end, snapshot } = selected;
+    if (snapshot !== state.resultText) return;
+    try {
+      state.isProcessing = true;
+      activeHumanizationController = new AbortController();
+      setLoading(true);
+      lockArticleControls(true);
+      setStateStatus('processing');
+      const response = await humanizeText(snapshot.slice(start, end), {
+        ...buildHumanizationOptions(state.preferences, state.instructions),
+        context: { before: snapshot.slice(Math.max(0, start - 800), start), after: snapshot.slice(end, end + 800) },
+        signal: activeHumanizationController.signal, limits: APP_CONFIG.textLimits
+      });
+      if (response.status !== 'completed') {
+        setStateStatus('completed');
+        if (response.status !== 'cancelled') showToast('Trecho preservado', response.error?.message || 'Não foi possível reescrever o trecho.', 'error');
+        return;
+      }
+      previous = snapshot;
+      state.resultText = snapshot.slice(0, start) + response.output.trim() + snapshot.slice(end);
+      previousOutput = state.resultText;
+      state.lastComparison = analyzeTexts(state.resultOriginalText, state.resultText);
+      setResult(state.resultText);
+      setStateStatus('completed');
+      showToast('Trecho reescrito', 'O restante do resultado foi preservado.', 'success');
+    } catch {
+      setStateStatus('completed');
+      showToast('Trecho preservado', 'Não foi possível concluir a reescrita.', 'error');
+    } finally {
+      activeHumanizationController = null;
+      state.isProcessing = false;
+      setLoading(false);
+      lockArticleControls(false);
+      undo.disabled = !previous;
+      selected = null;
+      rewrite.disabled = true;
+    }
+  });
+  undo.addEventListener('click', () => {
+    if (!previous || state.isProcessing) return;
+    if (state.resultText !== previousOutput) { previous = null; undo.disabled = true; return; }
+    state.resultText = previous;
+    previous = null;
+    state.lastComparison = analyzeTexts(state.resultOriginalText, state.resultText);
+    setResult(state.resultText);
+    setStateStatus('completed');
+    undo.disabled = true;
+    selected = null;
+    rewrite.disabled = true;
+  });
+  elements.humanizeButton.addEventListener('click', () => { previous = null; undo.disabled = true; });
+}
+
 function initialize() {
   restorePreferences();
   bindPreferenceControls();
   bindEditor();
   bindDialogs();
   bindHeader();
+  bindStudio();
   updateInputState();
   setResult('');
 

@@ -2,6 +2,8 @@
 
 **Sua voz, mais humana.** Um estúdio de texto para revisar e reescrever conteúdo com controle sobre tom, idioma e fidelidade ao original.
 
+O editor agora reúne colagem, upload e exemplo em um painel de duas colunas, com estilos rápidos e reescrita de um trecho selecionado no resultado, incluindo desfazer. A implementação segue os fluxos públicos observados no Grubby e mantém o motor configurado no Anti IA. Consulte [GRUBBY-INVESTIGACAO.md](GRUBBY-INVESTIGACAO.md) para fontes, cobertura e limites da reprodução.
+
 O Anti IA usa HTML, CSS e JavaScript Vanilla no navegador. A humanização é feita pelo DeepSeek por meio de uma Vercel Function; a chave da API permanece no servidor.
 
 ## Versão local com sua assinatura ChatGPT

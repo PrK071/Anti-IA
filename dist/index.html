@@ -8,8 +8,10 @@
   <title>Anti IA — Sua voz, mais humana</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/studio.css">
 </head>
-<body>
+<body class="studio-page">
+  <div class="studio-banner">Seu artigo inteiro, no seu ritmo. <a href="#editor">Até 50.000 palavras por documento →</a></div>
   <a class="skip-link" href="#editor">Ir para o editor</a>
 
   <div class="ambient ambient-one" aria-hidden="true"></div>
@@ -27,6 +29,7 @@
       </span>
     </a>
 
+    <nav class="studio-nav" aria-label="Navegação"><a href="#how-it-works">Como funciona</a><a href="#questions">Perguntas</a><a class="nav-editor" href="#editor">Abrir editor</a></nav>
     <div class="header-actions">
       <div class="ai-status" role="status" aria-label="Status do motor de inteligência artificial: conexão segura sob demanda">
         <span class="status-dot" aria-hidden="true"></span>
@@ -47,12 +50,123 @@
   <main class="workspace" id="editor">
     <section class="intro" aria-labelledby="pageTitle">
       <div>
-        <p class="eyebrow"><span></span> ESTÚDIO DE TEXTO</p>
-        <h1 id="pageTitle">Refine suas ideias.<br><em>Preserve sua voz.</em></h1>
+        <p class="eyebrow"><span></span> ANTI IA · ESTÚDIO DE REESCRITA</p>
+        <h1 id="pageTitle">Humanize seus textos. <br><em>Preserve sua voz.</em></h1>
       </div>
-      <p class="intro-copy">Um ambiente preciso para transformar textos sem apagar o que torna sua escrita única.</p>
+      <p class="intro-copy">Cole, importe e transforme seu texto em uma escrita mais natural. Do primeiro parágrafo ao artigo completo.</p>
     </section>
 
+    <section class="editor-section" aria-labelledby="editorTitle">
+      <div class="section-heading editor-heading">
+        <div><span class="step-number">03</span><h2 id="editorTitle">Trabalhe o texto</h2></div>
+        <span class="shortcut-hint"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> para humanizar</span>
+      </div>
+
+      <div class="editor-grid">
+        <article class="text-panel input-panel">
+          <div class="panel-header">
+            <div><span class="panel-dot violet"></span><h3>Texto de entrada</h3></div>
+            <div class="output-actions">
+              <button class="text-button" id="importDocumentButton" type="button" aria-label="Importar documento" title="Importar arquivo">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M12 18v-6m-3 3 3-3 3 3"/></svg><span>Importar arquivo</span>
+              </button>
+              <button class="text-button" id="copyOriginalButton" type="button" disabled aria-label="Copiar texto original" title="Copiar original">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>Copiar</span>
+              </button>
+              <button class="text-button" id="restoreButton" type="button" disabled aria-label="Restaurar texto original" title="Restaurar texto removido">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg><span>Restaurar</span>
+              </button>
+              <button class="text-button" id="checkAIButton" type="button" aria-label="Verificar texto com detectores de IA" title="Verificar IA">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.6 2.9 8.1 7 10 4.1-1.9 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg><span>Verificar IA</span>
+              </button>
+              <button class="text-button danger" id="clearButton" type="button" disabled>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 10v6M14 10v6"/></svg><span>Limpar</span>
+              </button>
+            </div>
+          </div>
+          <input id="documentInput" type="file" accept=".pdf,.docx,.md,.markdown,.txt,.csv,.tsv" hidden>
+          <div class="document-import-help">
+            <span id="documentImportHint">Importe, arraste ou cole um arquivo: PDF, DOCX, MD, TXT, CSV ou TSV · até 20 MB</span>
+            <span id="documentImportStatus" role="status" aria-live="polite" aria-atomic="true"></span>
+          </div>
+          <label class="sr-only" for="originalText">Texto original para verificar IA ou humanizar</label>
+          <textarea id="originalText" spellcheck="true" aria-describedby="documentImportHint documentImportStatus" placeholder="Cole ou escreva seu texto aqui… ou arraste um documento."></textarea>
+          <div class="input-helpers" id="inputHelpers">
+            <button id="pasteTextButton" type="button"><span aria-hidden="true">▣</span> Colar texto</button>
+            <button id="uploadDocumentButton" type="button"><span aria-hidden="true">↑</span> Enviar PDF ou documento</button>
+            <button id="sampleTextButton" type="button"><span aria-hidden="true">✦</span> Experimentar exemplo</button>
+          </div>
+          <div class="panel-footer">
+            <span><strong id="wordCount">0</strong> palavras</span>
+            <span class="footer-separator"></span>
+            <span><strong id="characterCount">0</strong> caracteres</span>
+            <span class="character-limit" id="limitIndicator">máx. 50.000 palavras</span>
+          </div>
+          <div class="studio-action-bar"><label for="rewriteProfile">Estilo</label><select id="rewriteProfile" aria-label="Estilo de reescrita"><option value="natural">Natural</option><option value="fluent">Fluente</option><option value="academic">Acadêmico</option><option value="custom" disabled>Personalizado</option></select>        <button class="humanize-button" id="humanizeButton" type="button">
+          <span class="button-glow" aria-hidden="true"></span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.3 4.2L17.5 8.5l-4.2 1.3L12 14l-1.3-4.2-4.2-1.3 4.2-1.3L12 3ZM18 14l.8 2.2L21 17l-2.2.8L18 20l-.8-2.2L15 17l2.2-.8L18 14Z"/></svg>
+          <span class="button-label">Humanizar texto</span>
+          <span class="button-loader" aria-hidden="true"></span>
+          <span class="button-arrow" aria-hidden="true">→</span>
+        </button></div>
+        </article>
+
+        <article class="text-panel output-panel">
+          <div class="panel-header">
+            <div><span class="panel-dot blue"></span><h3>Texto humanizado</h3><span class="api-badge">DEEPSEEK</span></div>
+            <div class="output-actions">
+              <button class="text-button" id="rewriteSelectionButton" type="button" disabled title="Selecione um trecho no resultado">Reescrever trecho</button>
+              <button class="text-button" id="undoSelectionButton" type="button" disabled>Desfazer trecho</button>
+              <button class="text-button" id="copyButton" type="button" disabled aria-label="Copiar texto humanizado">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>Copiar</span>
+              </button>
+              <button class="text-button" id="downloadButton" type="button" disabled aria-label="Baixar texto humanizado em TXT">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span>Baixar</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="output-content" id="outputContent">
+            <div class="empty-state" id="emptyState">
+              <div class="studio-empty-icon" aria-hidden="true">✦</div>
+              <h4>Seu texto transformado aparecerá aqui</h4>
+              <p>Escolha um estilo e clique em Humanizar texto para começar.</p>
+            </div>
+            <div class="result-text" id="resultText" tabindex="0" hidden></div>
+          </div>
+
+          <div class="panel-footer output-footer">
+            <span id="resultStats">Nenhum processamento realizado</span>
+            <button class="compare-button" id="compareButton" type="button" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3 4 7l4 4M4 7h13a3 3 0 0 1 3 3v1M16 21l4-4-4-4M20 17H7a3 3 0 0 1-3-3v-1"/></svg>Comparar versões
+            </button>
+          </div>
+        </article>
+      </div>
+
+      <div class="primary-action-wrap">
+        <div id="articleProgress" class="article-progress" role="status" aria-live="polite" hidden>
+          <span id="articleProgressLabel"></span>
+          <progress id="articleProgressBar" max="1" value="0" aria-label="Progresso do artigo"></progress>
+        </div>
+
+        <button id="cancelArticle" class="text-button" type="button" hidden>Pausar processamento</button>
+        <div class="article-checkpoint-actions">
+          <button id="resumeArticle" class="text-button" type="button">Restaurar artigo salvo</button>
+          <button id="forgetArticle" class="text-button" type="button">Apagar cópia local</button>
+        </div>
+        <p>Até 50.000 palavras por artigo. Blocos concluídos e texto original ficam salvos neste navegador para retomada. Mantenha a aba aberta durante o processamento.</p>
+        <p><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Processamento seguro pelo endpoint interno do Anti IA</p>
+      </div>
+    </section>
+    <details class="advanced-settings" id="advancedSettings">
+      <summary>
+        <span class="summary-title">
+          <span class="step-number">02</span>
+          <span><strong>Ajustes finos</strong><small>Personalize como o texto deverá ser tratado</small></span>
+        </span>
+        <span class="summary-action"><span>Configurar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></span>
+      </summary>
     <section class="mode-section" aria-labelledby="modeTitle">
       <div class="section-heading">
         <div>
@@ -102,14 +216,7 @@
       </div>
     </section>
 
-    <details class="advanced-settings" id="advancedSettings">
-      <summary>
-        <span class="summary-title">
-          <span class="step-number">02</span>
-          <span><strong>Ajustes finos</strong><small>Personalize como o texto deverá ser tratado</small></span>
-        </span>
-        <span class="summary-action"><span>Configurar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></span>
-      </summary>
+
 
       <div class="settings-grid">
         <fieldset class="setting-control processing-mode-control">
@@ -188,100 +295,16 @@
       </div>
     </details>
 
-    <section class="editor-section" aria-labelledby="editorTitle">
-      <div class="section-heading editor-heading">
-        <div><span class="step-number">03</span><h2 id="editorTitle">Trabalhe o texto</h2></div>
-        <span class="shortcut-hint"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> para humanizar</span>
-      </div>
-
-      <div class="editor-grid">
-        <article class="text-panel input-panel">
-          <div class="panel-header">
-            <div><span class="panel-dot violet"></span><h3>Texto original</h3></div>
-            <div class="output-actions">
-              <button class="text-button" id="importDocumentButton" type="button" aria-label="Importar documento" title="Importar arquivo">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M12 18v-6m-3 3 3-3 3 3"/></svg><span>Importar arquivo</span>
-              </button>
-              <button class="text-button" id="copyOriginalButton" type="button" disabled aria-label="Copiar texto original" title="Copiar original">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>Copiar</span>
-              </button>
-              <button class="text-button" id="restoreButton" type="button" disabled aria-label="Restaurar texto original" title="Restaurar texto removido">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg><span>Restaurar</span>
-              </button>
-              <button class="text-button" id="checkAIButton" type="button" aria-label="Verificar texto com detectores de IA" title="Verificar IA">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.6 2.9 8.1 7 10 4.1-1.9 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg><span>Verificar IA</span>
-              </button>
-              <button class="text-button danger" id="clearButton" type="button" disabled>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 10v6M14 10v6"/></svg><span>Limpar</span>
-              </button>
-            </div>
-          </div>
-          <input id="documentInput" type="file" accept=".pdf,.docx,.md,.markdown,.txt,.csv,.tsv" hidden>
-          <div class="document-import-help">
-            <span id="documentImportHint">Importe, arraste ou cole um arquivo: PDF, DOCX, MD, TXT, CSV ou TSV · até 20 MB</span>
-            <span id="documentImportStatus" role="status" aria-live="polite" aria-atomic="true"></span>
-          </div>
-          <label class="sr-only" for="originalText">Texto original para verificar IA ou humanizar</label>
-          <textarea id="originalText" spellcheck="true" aria-describedby="documentImportHint documentImportStatus" placeholder="Cole ou escreva seu texto aqui… ou arraste um documento."></textarea>
-          <div class="panel-footer">
-            <span><strong id="wordCount">0</strong> palavras</span>
-            <span class="footer-separator"></span>
-            <span><strong id="characterCount">0</strong> caracteres</span>
-            <span class="character-limit" id="limitIndicator">máx. 50.000 palavras</span>
-          </div>
-        </article>
-
-        <article class="text-panel output-panel">
-          <div class="panel-header">
-            <div><span class="panel-dot blue"></span><h3>Texto humanizado</h3><span class="api-badge">DEEPSEEK</span></div>
-            <div class="output-actions">
-              <button class="text-button" id="copyButton" type="button" disabled aria-label="Copiar texto humanizado">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>Copiar</span>
-              </button>
-              <button class="text-button" id="downloadButton" type="button" disabled aria-label="Baixar texto humanizado em TXT">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span>Baixar</span>
-              </button>
-            </div>
-          </div>
-
-          <div class="output-content" id="outputContent">
-            <div class="empty-state" id="emptyState">
-              <div class="empty-orb" aria-hidden="true"><span></span></div>
-              <h4>Seu texto transformado aparecerá aqui</h4>
-              <p>Configure o serviço no ambiente da Vercel e humanize seu texto. O resultado será exibido neste espaço.</p>
-            </div>
-            <div class="result-text" id="resultText" tabindex="0" hidden></div>
-          </div>
-
-          <div class="panel-footer output-footer">
-            <span id="resultStats">Nenhum processamento realizado</span>
-            <button class="compare-button" id="compareButton" type="button" disabled>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3 4 7l4 4M4 7h13a3 3 0 0 1 3 3v1M16 21l4-4-4-4M20 17H7a3 3 0 0 1-3-3v-1"/></svg>Comparar versões
-            </button>
-          </div>
-        </article>
-      </div>
-
-      <div class="primary-action-wrap">
-        <div id="articleProgress" class="article-progress" role="status" aria-live="polite" hidden>
-          <span id="articleProgressLabel"></span>
-          <progress id="articleProgressBar" max="1" value="0" aria-label="Progresso do artigo"></progress>
-        </div>
-        <button class="humanize-button" id="humanizeButton" type="button">
-          <span class="button-glow" aria-hidden="true"></span>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.3 4.2L17.5 8.5l-4.2 1.3L12 14l-1.3-4.2-4.2-1.3 4.2-1.3L12 3ZM18 14l.8 2.2L21 17l-2.2.8L18 20l-.8-2.2L15 17l2.2-.8L18 14Z"/></svg>
-          <span class="button-label">Humanizar texto</span>
-          <span class="button-loader" aria-hidden="true"></span>
-          <span class="button-arrow" aria-hidden="true">→</span>
-        </button>
-        <button id="cancelArticle" class="text-button" type="button" hidden>Pausar processamento</button>
-        <div class="article-checkpoint-actions">
-          <button id="resumeArticle" class="text-button" type="button">Restaurar artigo salvo</button>
-          <button id="forgetArticle" class="text-button" type="button">Apagar cópia local</button>
-        </div>
-        <p>Até 50.000 palavras por artigo. Blocos concluídos e texto original ficam salvos neste navegador para retomada. Mantenha a aba aberta durante o processamento.</p>
-        <p><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Processamento seguro pelo endpoint interno do Anti IA</p>
-      </div>
+    <section class="studio-how" id="how-it-works" aria-labelledby="howTitle">
+      <p class="studio-kicker">DO RASCUNHO À SUA VERSÃO</p><h2 id="howTitle">Três passos. Um texto com a sua voz.</h2>
+      <div class="how-grid"><article><span>01</span><h3>Traga suas ideias</h3><p>Cole o texto ou importe PDF, DOCX e outros documentos. O original fica disponível para comparação.</p></article><article><span>02</span><h3>Escolha o estilo</h3><p>Natural, fluente ou acadêmico. Ajuste tom, idioma, extensão e os termos que precisam ser preservados.</p></article><article><span>03</span><h3>Revise e exporte</h3><p>Compare as versões, reescreva um trecho selecionado e copie ou baixe o resultado em TXT.</p></article></div>
+    </section>
+    <section class="studio-faq" id="questions" aria-labelledby="faqTitle"><h2 id="faqTitle">Perguntas frequentes</h2>
+      <details><summary>Posso enviar meu artigo inteiro?</summary><p>Sim. O limite é de 50.000 palavras por documento. Artigos longos são processados em blocos, com progresso, pausa e retomada neste navegador.</p></details>
+      <details><summary>Qual modelo faz a reescrita?</summary><p>O Anti IA usa o modelo DeepSeek configurado no servidor. Os estilos controlam as instruções editoriais. O motor proprietário do Grubby não foi integrado.</p></details>
+      <details><summary>O resultado garante uma pontuação em detectores?</summary><p>Não há pontuação garantida. Detectores podem errar, inclusive em textos escritos por pessoas. Revise o conteúdo, os fatos e as referências antes de usar a versão final.</p></details>
+      <details><summary>Como reescrevo só uma parte?</summary><p>Selecione um trecho no resultado e clique em Reescrever trecho. O restante do texto fica preservado; a opção Desfazer trecho recupera a versão anterior.</p></details>
+      <details><summary>Onde fica meu artigo durante a retomada?</summary><p>O original e os blocos concluídos são armazenados neste navegador. Use Apagar cópia local para remover esse checkpoint. Cada trecho processado é enviado ao provedor de IA pelo servidor.</p></details>
     </section>
   </main>
 

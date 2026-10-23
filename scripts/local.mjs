@@ -11,7 +11,7 @@ import { validateDetectionText, segmentDetectionText } from '../js/detection-rep
 import { jsonResponse, errorResponse, getRequestId, parseRequestBody } from '../server/http.mjs';
 
 const root = resolve(fileURLToPath(new URL('../', import.meta.url)));
-const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.wasm': 'application/wasm' };
+const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.wasm': 'application/wasm' };
 
 export function createLocalServer(plan) {
   const sessions = new Set();
@@ -107,6 +107,7 @@ export function createLocalServer(plan) {
         let html = bytes.toString('utf8').replace('<title>Anti IA', '<title>Anti IA Local').replace('</head>', '<link rel="stylesheet" href="/css/local-chatgpt.css"></head>');
         html = html.replace('<main', '<section id="chatgptConnection" class="chatgpt-connection" aria-labelledby="chatgptConnectionTitle"></section><main');
         html = html.replace('DEEPSEEK</span>', 'CHATGPT · PLANO</span>').replace('IA via conexão segura', 'ChatGPT · versão local')
+          .replace('O Anti IA usa o modelo DeepSeek configurado no servidor.', 'A versão local do Anti IA usa o modelo escolhido na sua conta ChatGPT.')
           .replace('Configure o serviço no ambiente da Vercel e humanize seu texto.', 'Entre com ChatGPT, configure sua cota e revise seu texto.')
           .replace('Integração segura com IA via servidor', 'Local · usa sua cota do ChatGPT');
         html = html.replace('</body>', '<script type="module" src="/js/local-chatgpt.js"></script></body>');
