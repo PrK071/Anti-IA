@@ -1,5 +1,26 @@
 # Investigação do Uncheck: o que foi observado
 
+## Atualização: sessão autenticada e comparação real
+
+Em 23/10/2026 UTC (noite de 22/10 no horário de São Paulo), o operador conectou sua própria conta e autorizou a continuação. Foram realizadas duas gerações normais pela interface, com o mesmo texto próprio em português de 62 palavras sobre bibliotecas. Não foram retidos cookies, tokens ou dados da conta.
+
+| Modo | Entrada | Saída exibida | Resultado mostrado pelo site |
+| --- | ---: | ---: | --- |
+| Precise | 62 palavras | 76 palavras | 100% humano para sete marcas |
+| Advanced | 62 palavras | 85 palavras | 100% humano para sete marcas |
+
+O resultado Precise omitiu a necessidade de materiais atualizados e converteu a descrição de ouvir moradores em uma instrução direta. O Advanced acrescentou uma alegação sobre materiais sendo vendidos ou retirados das prateleiras, ausente do original. São observações dessas duas saídas; não medem a taxa geral de erros do produto.
+
+**Achado sobre os percentuais:** o script público `17ejo9._~5spr.js`, na função `useEvalMap` (cópia local, linhas 1213–1235), converte a categoria `POSITIVE` no literal `100%`, `NEUTRAL` em `50%` e `NEGATIVE` em `0%`. O componente dos cartões usa `evalMap[v.eval].percent` (linha 1503). Assim, os sete percentuais vistos nessa tela são rótulos discretos de categorias. Essa apresentação não demonstra que cada detector retornou uma probabilidade numérica de 1,00, nem demonstra por si só chamadas independentes aos serviços oficiais. Não foi estabelecida a origem interna de cada categoria no servidor.
+
+A lista de modos exposta pela interface associa Advanced ao valor `aggressive`, Instant a `fast` e Precise a `latest`. Esses valores são seletores da aplicação, não identificação dos pesos ou modelo base.
+
+Como comparação limitada, o modelo local `Detecting-ai/pt-ai-detector` classificou o original e ambas as saídas como humanos, com `ai_score` arredondado para 0,000000 nos três casos. Portanto, esta amostra não demonstra ganho de detecção: o texto original já recebia o mesmo resultado nesse modelo. Isso não valida GPTZero, Copyleaks ou os outros serviços nomeados pelo Uncheck.
+
+As entradas e saídas completas estão em `C:\Users\luiz\uncheck-research\authenticated-samples.json`, e a comparação local em `local-comparison.json`. A saída Advanced foi mantida aberta no navegador para inspeção. O acesso autenticado permitiu observar resultados reais, mas não expôs os pesos, arquitetura, prompt do servidor ou algoritmo de inferência. O AVATAR não foi alterado para exibir percentuais fixos de humanização ou afirmar uma réplica exata.
+
+Fonte do mapeamento visual: https://cdn.uncheck.ai/web-cdn/bypass/_next/static/chunks/17ejo9._~5spr.js . As seções abaixo descrevem a etapa anterior, sem autenticação.
+
 Data: 22/10/2026. Inspeção dos arquivos públicos servidos por https://uncheck.ai/ e de dois cenários no navegador, com REA. Não foi acessado código do servidor, conta de terceiros ou área autenticada.
 
 ## Artefatos
