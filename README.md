@@ -1,4 +1,4 @@
-# AVATAR
+# Anti-IA
 
 **Sua voz, mais humana.** Um estúdio de texto para revisar e reescrever conteúdo com controle sobre tom, idioma e fidelidade ao original.
 
