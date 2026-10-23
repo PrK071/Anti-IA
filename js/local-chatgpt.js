@@ -4,11 +4,11 @@ let loginTimer;
 let working = false;
 
 panel.innerHTML = `
-  <div class="chatgpt-heading"><div><span class="eyebrow">AVATAR LOCAL</span><h2 id="chatgptConnectionTitle">Use seu plano ChatGPT</h2></div><span class="chatgpt-local-tag">No seu computador</span></div>
+  <div class="chatgpt-heading"><div><span class="eyebrow">Anti IA LOCAL</span><h2 id="chatgptConnectionTitle">Use seu plano ChatGPT</h2></div><span class="chatgpt-local-tag">No seu computador</span></div>
   <p>Usa a cota da sua assinatura existente. Sem chave de API, compra de créditos ou alternativa por API paga.</p>
   <div class="chatgpt-actions"><button id="chatgptLogin" class="chatgpt-signin" type="button">Continue with ChatGPT</button><a href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener noreferrer">Gerenciar uso no ChatGPT ↗</a><button id="chatgptDisconnect" class="text-button" type="button" hidden>Desconectar</button></div>
   <p id="chatgptStatus" role="status">Consultando conexão…</p>
-  <div id="chatgptCostGuard" class="chatgpt-cost-guard" hidden><strong>Configure para usar apenas sua cota</strong><p>Em Gerenciar uso, encontre AVATAR Local e desative o uso de créditos após atingir o limite do plano. Essa configuração pertence ao ChatGPT; o AVATAR não consegue alterá-la automaticamente.</p><label><input id="chatgptNoCredits" type="checkbox"> Confirmei que o uso de créditos para AVATAR Local está desativado no ChatGPT.</label><button id="chatgptEnable" type="button" disabled>Usar somente a cota do plano</button></div>
+  <div id="chatgptCostGuard" class="chatgpt-cost-guard" hidden><strong>Configure para usar apenas sua cota</strong><p>Em Gerenciar uso, encontre Anti IA Local e desative o uso de créditos após atingir o limite do plano. Essa configuração pertence ao ChatGPT; o Anti IA não consegue alterá-la automaticamente.</p><label><input id="chatgptNoCredits" type="checkbox"> Confirmei que o uso de créditos para Anti IA Local está desativado no ChatGPT.</label><button id="chatgptEnable" type="button" disabled>Usar somente a cota do plano</button></div>
   <div id="chatgptModelControl" hidden><label for="chatgptModel">Modelo disponível na sua conta</label><select id="chatgptModel"></select><p class="chatgpt-note">A verificação é uma avaliação do modelo. Ela não reproduz o GPTZero nem garante um percentual de autoria.</p></div>
   <p id="chatgptError" role="alert" hidden></p>`;
 

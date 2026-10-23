@@ -123,7 +123,7 @@ export function createChatGPTPlan({ store, fetcher = (...args) => fetch(...args)
         redirectUri, browserSession, clientId: record.client_id, subject: record.subject, expires: Date.now() + 10 * 60_000 };
       const url = new URL(`${ISSUER}/api/accounts/authorize`);
       url.search = new URLSearchParams({ client_id: pending.clientId || 'dynamic_agent_client',
-        ...(!pending.clientId ? { agent_name_hint: 'AVATAR Local' } : {}), ext_agent_host_id: record.host_id,
+        ...(!pending.clientId ? { agent_name_hint: 'Anti IA Local' } : {}), ext_agent_host_id: record.host_id,
         response_type: 'code', redirect_uri: redirectUri, scope: SCOPES, resource: RESOURCE,
         state: pending.state, nonce: pending.nonce, code_challenge_method: 'S256', code_challenge: createHash('sha256').update(verifier).digest('base64url') }).toString();
       return url.href;
@@ -131,7 +131,7 @@ export function createChatGPTPlan({ store, fetcher = (...args) => fetch(...args)
     async callback(url, browserSession) {
       const attempt = pending;
       if (!attempt || attempt.expires < Date.now() || browserSession !== attempt.browserSession || url.searchParams.get('state') !== attempt.state) {
-        throw new PlanError('INVALID_LOGIN_STATE', 'Este pedido de login expirou ou não é válido. Volte ao AVATAR e entre novamente.', 400);
+        throw new PlanError('INVALID_LOGIN_STATE', 'Este pedido de login expirou ou não é válido. Volte ao Anti IA e entre novamente.', 400);
       }
       pending = undefined;
       if (url.searchParams.has('error')) throw new PlanError('LOGIN_DECLINED', 'O login foi cancelado. Nenhum texto foi enviado.', 400);
@@ -164,7 +164,7 @@ export function createChatGPTPlan({ store, fetcher = (...args) => fetch(...args)
       await persist();
     },
     acknowledgeCreditsDisabled(value) {
-      if (!sharing() || value !== true) throw new PlanError('COST_GUARD_REQUIRED', 'Desative o uso de créditos para AVATAR Local no ChatGPT e confirme antes de continuar.', 403);
+      if (!sharing() || value !== true) throw new PlanError('COST_GUARD_REQUIRED', 'Desative o uso de créditos para Anti IA Local no ChatGPT e confirme antes de continuar.', 403);
       creditsDisabled = true;
       quotaReached = false;
     },
@@ -179,7 +179,7 @@ export function createChatGPTPlan({ store, fetcher = (...args) => fetch(...args)
       return models;
     },
     async complete(messages, model, signal) {
-      if (!creditsDisabled) throw new PlanError('COST_GUARD_REQUIRED', 'Desative o uso de créditos no ChatGPT e confirme essa configuração no AVATAR.', 403);
+      if (!creditsDisabled) throw new PlanError('COST_GUARD_REQUIRED', 'Desative o uso de créditos no ChatGPT e confirme essa configuração no Anti IA.', 403);
       if (quotaReached) throw new PlanError('PLAN_LIMIT_REACHED', 'A cota do plano atingiu um limite. Aguarde e consulte Gerenciar uso.', 429);
       const token = await accessToken();
       if (!models.some((item) => item.slug === model)) throw new PlanError('INVALID_MODEL', 'Selecione um modelo disponível na sua conta.', 400);

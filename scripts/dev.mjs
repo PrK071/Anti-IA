@@ -49,7 +49,7 @@ createServer(async (incoming, outgoing) => {
     outgoing.end(JSON.stringify({ status: 'error', error: { code: 'SERVER_ERROR', message: 'Não foi possível processar a solicitação.' } }));
   }
 }).listen(port, '127.0.0.1', () => {
-  console.info(`AVATAR disponível em http://127.0.0.1:${port}`);
+  console.info(`Anti IA disponível em http://127.0.0.1:${port}`);
   if (!process.env.DEEPSEEK_API_KEY && !process.env.GPTZERO_API_KEY) {
     console.info('Para ativar a análise, configure DEEPSEEK_API_KEY ou GPTZERO_API_KEY no arquivo .env e reinicie o servidor.');
   }

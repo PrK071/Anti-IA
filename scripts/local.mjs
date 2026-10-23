@@ -49,11 +49,11 @@ export function createLocalServer(plan) {
       if (url.pathname === '/auth/callback' && request.method === 'GET') {
         await plan.callback(url, browserSession);
         selectedModel = undefined;
-        return reply(new Response('<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>AVATAR — ChatGPT conectado</title><body style="font:18px system-ui;background:#111116;color:#eee;padding:48px"><h1>Login concluído</h1><p>Volte à janela do AVATAR Local. Antes de processar textos, desative o uso de créditos para AVATAR Local em <a style="color:#b892ff" href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener">Gerenciar uso</a>.</p><p>Você pode fechar esta aba.</p></body></html>', { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' } }));
+        return reply(new Response('<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>Anti IA — ChatGPT conectado</title><body style="font:18px system-ui;background:#111116;color:#eee;padding:48px"><h1>Login concluído</h1><p>Volte à janela do Anti IA Local. Antes de processar textos, desative o uso de créditos para Anti IA Local em <a style="color:#b892ff" href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener">Gerenciar uso</a>.</p><p>Você pode fechar esta aba.</p></body></html>', { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' } }));
       }
       if (url.pathname.startsWith('/api/')) {
         if (request.method !== 'POST') return reply(errorResponse(405, requestId, 'METHOD_NOT_ALLOWED', 'Utilize POST.'));
-        if (headers.get('origin') !== origin || !sessions.has(browserSession)) return reply(errorResponse(403, requestId, 'ORIGIN_NOT_ALLOWED', 'Abra o AVATAR pelo atalho local.'));
+        if (headers.get('origin') !== origin || !sessions.has(browserSession)) return reply(errorResponse(403, requestId, 'ORIGIN_NOT_ALLOWED', 'Abra o Anti IA pelo atalho local.'));
         if (!headers.get('content-type')?.includes('application/json')) return reply(errorResponse(415, requestId, 'UNSUPPORTED_MEDIA_TYPE', 'Envie JSON.'));
         const parsed = await parseRequestBody(request, requestId);
         if (parsed.response) return reply(parsed.response);
@@ -104,7 +104,7 @@ export function createLocalServer(plan) {
       let bytes;
       try { bytes = await readFile(filename); } catch { outgoing.writeHead(404).end(); return; }
       if (filename.endsWith('index.html')) {
-        let html = bytes.toString('utf8').replace('<title>AVATAR', '<title>AVATAR Local').replace('</head>', '<link rel="stylesheet" href="/css/local-chatgpt.css"></head>');
+        let html = bytes.toString('utf8').replace('<title>Anti IA', '<title>Anti IA Local').replace('</head>', '<link rel="stylesheet" href="/css/local-chatgpt.css"></head>');
         html = html.replace('<main', '<section id="chatgptConnection" class="chatgpt-connection" aria-labelledby="chatgptConnectionTitle"></section><main');
         html = html.replace('DEEPSEEK</span>', 'CHATGPT · PLANO</span>').replace('IA via conexão segura', 'ChatGPT · versão local')
           .replace('Configure o serviço no ambiente da Vercel e humanize seu texto.', 'Entre com ChatGPT, configure sua cota e revise seu texto.')
@@ -130,6 +130,6 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const plan = createChatGPTPlan({ store: protectedStore(resolve(root, '.local', 'chatgpt.bin')) });
   await plan.init();
   const server = createLocalServer(plan);
-  server.on('error', () => { console.error('Não foi possível abrir o AVATAR Local. A porta pode estar em uso.'); process.exitCode = 1; });
-  server.listen(3187, '127.0.0.1', () => console.info('AVATAR Local: http://127.0.0.1:3187 — utiliza somente a cota do ChatGPT autorizada pelo usuário.'));
+  server.on('error', () => { console.error('Não foi possível abrir o Anti IA Local. A porta pode estar em uso.'); process.exitCode = 1; });
+  server.listen(3187, '127.0.0.1', () => console.info('Anti IA Local: http://127.0.0.1:3187 — utiliza somente a cota do ChatGPT autorizada pelo usuário.'));
 }

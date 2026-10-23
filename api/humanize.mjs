@@ -178,7 +178,7 @@ export function buildMessages({ text, options, context }) {
     : 'Não há instruções adicionais do usuário.';
 
   const system = [
-    'Você é o motor de reescrita contextual do AVATAR.',
+    'Você é o motor de reescrita contextual do Anti IA.',
     'Preserve o significado, os fatos e os argumentos do original, não sua redação literal nem sua sintaxe.',
     'Preserve nomes, datas, números, citações, referências e informações verificáveis.',
     'Reescreva de forma contextual: reconstrua passagens quando necessário para produzir linguagem natural, fluida, coesa e bem organizada.',

@@ -2,14 +2,14 @@
 
 **Sua voz, mais humana.** Um estúdio de texto para revisar e reescrever conteúdo com controle sobre tom, idioma e fidelidade ao original.
 
-O AVATAR usa HTML, CSS e JavaScript Vanilla no navegador. A humanização é feita pelo DeepSeek por meio de uma Vercel Function; a chave da API permanece no servidor.
+O Anti IA usa HTML, CSS e JavaScript Vanilla no navegador. A humanização é feita pelo DeepSeek por meio de uma Vercel Function; a chave da API permanece no servidor.
 
 ## Versão local com sua assinatura ChatGPT
 
-O modo local usa o login oficial **Sign in with ChatGPT** e a cota do plano da conta elegível. Ele não lê `.env`, não usa chaves de APIs pagas e não muda de provedor quando a cota acaba. A integração requer Windows e Node.js 22 ou superior. Depois de instalar as dependências, execute `scripts/install-shortcut.ps1` para criar **AVATAR Local** na área de trabalho; o atalho inicia o serviço em `http://127.0.0.1:3187` e abre o navegador. Também é possível iniciar com `npm run local`.
+O modo local usa o login oficial **Sign in with ChatGPT** e a cota do plano da conta elegível. Ele não lê `.env`, não usa chaves de APIs pagas e não muda de provedor quando a cota acaba. A integração requer Windows e Node.js 22 ou superior. Depois de instalar as dependências, execute `scripts/install-shortcut.ps1` para criar **Anti IA Local** na área de trabalho; o atalho inicia o serviço em `http://127.0.0.1:3187` e abre o navegador. Também é possível iniciar com `npm run local`.
 
 1. Clique em **Continue with ChatGPT** e autorize o uso do plano na página oficial.
-2. Abra **Gerenciar uso no ChatGPT**, encontre **AVATAR Local** e desative o uso de créditos após atingir o limite do plano. O ChatGPT controla essa opção; o AVATAR não tem uma API para verificá-la ou alterá-la. A interface exige sua confirmação antes de habilitar o processamento.
+2. Abra **Gerenciar uso no ChatGPT**, encontre **Anti IA Local** e desative o uso de créditos após atingir o limite do plano. O ChatGPT controla essa opção; o Anti IA não tem uma API para verificá-la ou alterá-la. A interface exige sua confirmação antes de habilitar o processamento.
 3. Selecione um dos modelos retornados para sua conta e use o editor normalmente. A verificação continua sendo uma avaliação subjetiva do modelo, diferente do detector GPTZero.
 
 O login é armazenado em `.local/chatgpt.bin`, criptografado pelo Windows DPAPI para seu usuário. Tokens não são enviados ao JavaScript do navegador. O serviço aceita apenas conexões de loopback com a origem local, valida estado/PKCE/nonce e identidade assinada, renova o login quando necessário e descarta saídas incompletas. Desconectar remove as credenciais locais; para revogar também a permissão na OpenAI, use as configurações do ChatGPT. Após reiniciar o serviço ou entrar novamente, confirme novamente a configuração de créditos.
@@ -70,7 +70,7 @@ Navegador (HTML + CSS + JS)
                   └── Vercel Function ── DeepSeek API
 ```
 
-O navegador envia o texto e as preferências ao endpoint do próprio AVATAR. A função valida os dados, escolhe o modelo configurado no servidor e devolve somente o texto reescrito. O original continua disponível para comparação.
+O navegador envia o texto e as preferências ao endpoint do próprio Anti IA. A função valida os dados, escolhe o modelo configurado no servidor e devolve somente o texto reescrito. O original continua disponível para comparação.
 
 ## Publicar na Vercel
 
@@ -121,4 +121,4 @@ Os testes de navegador cobrem PDFs e DOCX reais, seleção, arrastar, colar, res
 Distribuído sob a [licença MIT](LICENSE).
 # Artigos de até 50.000 palavras
 
-A humanização agora processa artigos de até 50 mil palavras em blocos com progresso, pausa e retomada local. Consulte [HUMANIZACAO-ARTIGOS.md](HUMANIZACAO-ARTIGOS.md) para limites, preservação de dados, custos do provedor e critérios de validação. O recurso usa o modelo configurado no AVATAR; não reproduz o modelo proprietário do Uncheck.
+A humanização agora processa artigos de até 50 mil palavras em blocos com progresso, pausa e retomada local. Consulte [HUMANIZACAO-ARTIGOS.md](HUMANIZACAO-ARTIGOS.md) para limites, preservação de dados, custos do provedor e critérios de validação. O recurso usa o modelo configurado no Anti IA; não reproduz o modelo proprietário do Uncheck.

@@ -228,7 +228,7 @@ export async function copyToClipboard(text) {
   if (!successful) throw new Error('A cópia foi bloqueada pelo navegador.');
 }
 
-export function downloadText(text, filename = 'avatar-texto-humanizado.txt') {
+export function downloadText(text, filename = 'anti-ia-texto-humanizado.txt') {
   if (!text) throw new Error('Não há conteúdo para baixar.');
   const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);

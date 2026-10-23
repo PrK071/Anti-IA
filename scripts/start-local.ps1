@@ -6,7 +6,7 @@ $nodeCandidates = @((Join-Path $projectRoot '.runtime\node.exe'), (Join-Path $en
 $nodeCommand = Get-Command node.exe -ErrorAction SilentlyContinue
 if ($nodeCommand) { $nodeCandidates += $nodeCommand.Source }
 $nodeExecutable = $nodeCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
-if (-not $nodeExecutable) { throw 'Node.js não encontrado. Instale Node.js 22 ou superior para abrir o AVATAR Local.' }
+if (-not $nodeExecutable) { throw 'Node.js não encontrado. Instale Node.js 22 ou superior para abrir o Anti IA Local.' }
 $alreadyRunning = $false
 try { $health = Invoke-RestMethod -Uri "$avatarUrl/api/chatgpt/session" -TimeoutSec 2; $alreadyRunning = $health.app -eq 'avatar-chatgpt-local' } catch {}
 if (-not $alreadyRunning) {
@@ -18,5 +18,5 @@ if (-not $alreadyRunning) {
     try { $health = Invoke-RestMethod -Uri "$avatarUrl/api/chatgpt/session" -TimeoutSec 2; if ($health.app -eq 'avatar-chatgpt-local') { $alreadyRunning = $true; break } } catch {}
   }
 }
-if (-not $alreadyRunning) { throw 'O AVATAR Local não iniciou. Verifique .local/server-error.log.' }
+if (-not $alreadyRunning) { throw 'O Anti IA Local não iniciou. Verifique .local/server-error.log.' }
 if (-not $NoBrowser) { Start-Process $avatarUrl }

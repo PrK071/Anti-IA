@@ -1,6 +1,6 @@
 # Humanização de artigos de até 50 mil palavras
 
-Os modos Instantâneo, Avançado e Preciso e os controles de tom, idioma, formalidade, criatividade, simplificação, tamanho e preservação são próprios do AVATAR. O fluxo usa como referência os controles públicos do Uncheck, sem reproduzir seu modelo proprietário, seus resultados ou promessas de aprovação em detectores.
+Os modos Instantâneo, Avançado e Preciso e os controles de tom, idioma, formalidade, criatividade, simplificação, tamanho e preservação são próprios do Anti IA. O fluxo usa como referência os controles públicos do Uncheck, sem reproduzir seu modelo proprietário, seus resultados ou promessas de aprovação em detectores.
 
 ## Processamento
 
@@ -13,7 +13,7 @@ Os modos Instantâneo, Avançado e Preciso e os controles de tom, idioma, formal
 
 ## Serviço de IA
 
-Configure DEEPSEEK_API_KEY no servidor, conforme .env.example. Chaves nunca vão ao frontend. O motor é a integração oficial existente do AVATAR; não foi obtida nem usada uma API privada ou credencial do Uncheck. Artigos longos geram várias chamadas pagas segundo o plano do provedor.
+Configure DEEPSEEK_API_KEY no servidor, conforme .env.example. Chaves nunca vão ao frontend. O motor é a integração oficial existente do Anti IA; não foi obtida nem usada uma API privada ou credencial do Uncheck. Artigos longos geram várias chamadas pagas segundo o plano do provedor.
 
 A verificação de autoria continua uma operação separada, com limite de 50.000 caracteres; não é uma verificação automática de todo o artigo de 50 mil palavras. O modo local com ChatGPT mantém suas regras próprias de conexão e cobrança.
 
