@@ -1,5 +1,6 @@
 import { APP_CONFIG, PROCESSING_MODES } from '../config.js';
 import { validateText } from './text-analysis.js';
+import { processDocument, CHUNK_CHARACTERS, CHUNK_WORDS } from './long-document.js';
 
 const HUMANIZE_ENDPOINT = '/api/humanize';
 const CLIENT_TIMEOUT_MS = APP_CONFIG.requestTimeoutMs || 55_000;
@@ -79,7 +80,8 @@ export function buildHumanizationOptions(preferences, instructions = '') {
 export function createHumanizePayload(text, options = {}) {
   return {
     text: String(text ?? '').normalize('NFC').trim(),
-    options: structuredClone(publicRequestOptions(options))
+    options: structuredClone(publicRequestOptions(options)),
+    ...(options.context ? { context: options.context } : {})
   };
 }
 
@@ -91,7 +93,7 @@ export function validateHumanizationInput(text, limits = APP_CONFIG.textLimits) 
  * Envia o texto somente ao endpoint interno do AVATAR. A chave do provedor e a
  * chamada ao DeepSeek permanecem exclusivamente na função serverless.
  */
-export async function humanizeText(text, options = {}) {
+async function humanizeChunk(text, options = {}) {
   const validation = validateHumanizationInput(text, options.limits || APP_CONFIG.textLimits);
   const request = createHumanizePayload(text, options);
 
@@ -129,6 +131,7 @@ export async function humanizeText(text, options = {}) {
         request,
         validation,
         requestId: body?.requestId || requestId,
+        retryAfterMs: retryAfterMilliseconds(response.headers.get('retry-after')),
         error
       };
     }
@@ -168,5 +171,26 @@ export async function humanizeText(text, options = {}) {
     };
   } finally {
     abortContext.cleanup();
+  }
+}
+
+function retryAfterMilliseconds(value) {
+  if (!value) return null;
+  const seconds = Number(value);
+  return Number.isFinite(seconds) ? seconds*1000 : Math.max(1000, Date.parse(value)-Date.now()) || null;
+}
+
+export async function humanizeText(text, options = {}) {
+  const validation = validateHumanizationInput(text, options.limits || APP_CONFIG.textLimits);
+  const request = createHumanizePayload(text, options);
+  if (!validation.valid) return { status: 'error', output: null, request, validation,
+    error: createError(validation.code, validation.message) };
+  if (request.text.length <= CHUNK_CHARACTERS && validation.counts.words <= CHUNK_WORDS) return humanizeChunk(text, options);
+  try {
+    const response = await processDocument(request.text, options, humanizeChunk);
+    return { ...response, request, validation };
+  } catch (error) {
+    return { status: 'error', output: null, request, validation,
+      error: createError('DOCUMENT_PROCESSING_ERROR', error.message || 'Falha ao preparar o artigo.') };
   }
 }

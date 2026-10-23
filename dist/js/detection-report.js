@@ -5,7 +5,8 @@ export const DETECTION_LABELS = Object.freeze({ human: 'Humano', mixed: 'Misto',
 export const MIN_DETECTION_CHARACTERS = 250;
 
 export function validateDetectionText(text, limits = APP_CONFIG.textLimits) {
-  const validation = validateText(text, limits);
+  // A verificação de autoria é uma operação separada da reescrita por blocos.
+  const validation = validateText(text, { ...limits, maxCharacters: Math.min(limits.maxCharacters ?? 50000, 50000) });
   if (!validation.valid) return validation;
   if (text.trim().length < MIN_DETECTION_CHARACTERS) {
     return { ...validation, valid: false, code: 'TEXT_TOO_SHORT', message: 'Insira pelo menos 250 caracteres para verificar IA.' };

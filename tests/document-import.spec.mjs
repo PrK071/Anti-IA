@@ -60,7 +60,7 @@ test('erros preservam o texto e permitem importar novamente o mesmo arquivo', as
   for (const [name, buffer, error] of [
     ['invalido.docx', Buffer.from('invalid'), /DOCX/u],
     ['invalido.pdf', Buffer.from('invalid'), /PDF está inválido/u],
-    ['grande.md', Buffer.from('a'.repeat(50001)), /50.000/u]
+    ['grande.md', Buffer.from('palavra '.repeat(50001)), /50.000/u]
   ]) {
     await page.locator('#documentInput').setInputFiles({ name, mimeType: 'application/octet-stream', buffer });
     await expect(page.locator('#documentImportStatus')).toHaveText(error);

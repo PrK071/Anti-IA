@@ -1,8 +1,8 @@
 export const APP_CONFIG = Object.freeze({
   textLimits: Object.freeze({
-    // Sem limite comercial. O mesmo teto técnico é validado novamente no servidor.
-    maxWords: null,
-    maxCharacters: 50000,
+    // Limite por documento. O cliente envia blocos menores ao servidor.
+    maxWords: 50000,
+    maxCharacters: 2000000,
     warningThreshold: 0.9
   }),
   supportedLanguages: Object.freeze(['pt-BR', 'pt-PT', 'en-US', 'es', 'fr-FR', 'de-DE', 'it-IT'])

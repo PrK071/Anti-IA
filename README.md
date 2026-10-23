@@ -119,3 +119,6 @@ Os testes de navegador cobrem PDFs e DOCX reais, seleção, arrastar, colar, res
 ## Licença
 
 Distribuído sob a [licença MIT](LICENSE).
+# Artigos de até 50.000 palavras
+
+A humanização agora processa artigos de até 50 mil palavras em blocos com progresso, pausa e retomada local. Consulte [HUMANIZACAO-ARTIGOS.md](HUMANIZACAO-ARTIGOS.md) para limites, preservação de dados, custos do provedor e critérios de validação. O recurso usa o modelo configurado no AVATAR; não reproduz o modelo proprietário do Uncheck.

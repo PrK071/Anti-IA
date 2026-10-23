@@ -227,7 +227,7 @@
             <span><strong id="wordCount">0</strong> palavras</span>
             <span class="footer-separator"></span>
             <span><strong id="characterCount">0</strong> caracteres</span>
-            <span class="character-limit" id="limitIndicator">limite técnico: 50.000 caracteres</span>
+            <span class="character-limit" id="limitIndicator">máx. 50.000 palavras</span>
           </div>
         </article>
 
@@ -263,6 +263,10 @@
       </div>
 
       <div class="primary-action-wrap">
+        <div id="articleProgress" class="article-progress" role="status" aria-live="polite" hidden>
+          <span id="articleProgressLabel"></span>
+          <progress id="articleProgressBar" max="1" value="0" aria-label="Progresso do artigo"></progress>
+        </div>
         <button class="humanize-button" id="humanizeButton" type="button">
           <span class="button-glow" aria-hidden="true"></span>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.3 4.2L17.5 8.5l-4.2 1.3L12 14l-1.3-4.2-4.2-1.3 4.2-1.3L12 3ZM18 14l.8 2.2L21 17l-2.2.8L18 20l-.8-2.2L15 17l2.2-.8L18 14Z"/></svg>
@@ -270,6 +274,12 @@
           <span class="button-loader" aria-hidden="true"></span>
           <span class="button-arrow" aria-hidden="true">→</span>
         </button>
+        <button id="cancelArticle" class="text-button" type="button" hidden>Pausar processamento</button>
+        <div class="article-checkpoint-actions">
+          <button id="resumeArticle" class="text-button" type="button">Restaurar artigo salvo</button>
+          <button id="forgetArticle" class="text-button" type="button">Apagar cópia local</button>
+        </div>
+        <p>Até 50.000 palavras por artigo. Blocos concluídos e texto original ficam salvos neste navegador para retomada. Mantenha a aba aberta durante o processamento.</p>
         <p><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Processamento seguro pelo endpoint interno do AVATAR</p>
       </div>
     </section>

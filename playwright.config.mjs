@@ -4,7 +4,8 @@ export default defineConfig({
   testDir: './tests',
   testMatch: '*.spec.mjs',
   workers: 2,
-  use: { baseURL: 'http://127.0.0.1:4173', headless: true },
+  use: { baseURL: 'http://127.0.0.1:4173', headless: true,
+    launchOptions: process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : {} },
   projects: [
     { name: 'root', use: { viewport: { width: 1440, height: 1000 } } },
     { name: 'dist', use: { viewport: { width: 375, height: 812 } } }

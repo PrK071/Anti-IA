@@ -1,5 +1,6 @@
 import { APP_CONFIG, PROCESSING_MODES } from '../config.js';
 import { humanizeText, buildHumanizationOptions } from './humanizer.js';
+import { createCheckpointStore } from './long-document.js';
 import { analyzeAuthorship } from './detectors.js';
 import { validateDetectionText } from './detection-report.js';
 import { setupComparison } from './compare.js';
@@ -58,6 +59,33 @@ const state = {
 const comparison = setupComparison();
 let activeHumanizationController = null;
 let activeDetectorController = null;
+const articleStore = createCheckpointStore();
+const articleProgress = document.querySelector('#articleProgress');
+const cancelArticle = document.querySelector('#cancelArticle');
+let lockedControls = [];
+
+function lockArticleControls(locked) {
+  if (locked) {
+    lockedControls = [...document.querySelectorAll('input, select, textarea, #importDocumentButton, #clearButton, #restoreButton, #checkAIButton, #resumeArticle, #forgetArticle')]
+      .map(control => ({ control, disabled: control.disabled }));
+    for (const { control } of lockedControls) control.disabled = true;
+  } else {
+    for (const { control, disabled } of lockedControls) control.disabled = disabled;
+    lockedControls = [];
+  }
+  cancelArticle.hidden = !locked;
+}
+
+function showArticleProgress(progress) {
+  articleProgress.hidden = false;
+  const label = progress.waiting
+    ? `Aguardando limite do serviço (${Math.ceil(progress.waitMs/1000)}s). ${progress.completed}/${progress.total} blocos salvos.`
+    : `${progress.resumed ? 'Retomando · ' : ''}${progress.completed}/${progress.total} blocos concluídos · ${progress.completedWords.toLocaleString('pt-BR')} palavras processadas.`;
+  document.querySelector('#articleProgressLabel').textContent = label + (progress.checkpointAvailable ? '' : ' Retomada indisponível: mantenha a aba aberta.');
+  const bar = document.querySelector('#articleProgressBar');
+  bar.max = progress.total;
+  bar.value = progress.completed;
+}
 
 function getControls() {
   return {
@@ -195,16 +223,26 @@ async function requestHumanization() {
   try {
     state.isProcessing = true;
     activeHumanizationController = new AbortController();
+    articleProgress.hidden = true;
     setLoading(true);
+    lockArticleControls(true);
     setStateStatus('processing');
 
     const options = {
       ...buildHumanizationOptions(state.preferences, state.instructions),
       limits: APP_CONFIG.textLimits,
-      signal: activeHumanizationController.signal
+      signal: activeHumanizationController.signal,
+      onProgress: showArticleProgress
     };
     const response = await humanizeText(requestOriginalText, options);
     state.lastRequest = response.request;
+    if (response.partialOutput) {
+      state.resultText = response.partialOutput;
+      state.resultOriginalText = requestOriginalText;
+      setResult(response.partialOutput);
+      articleProgress.hidden = false;
+      document.querySelector('#articleProgressLabel').textContent = 'Resultado parcial preservado. Clique em Humanizar texto para retomar com o mesmo artigo e configurações.';
+    }
 
     if (response.status === 'error') {
       setStateStatus('error', response.error);
@@ -228,6 +266,7 @@ async function requestHumanization() {
       state.lastComparison = analyzeTexts(state.resultOriginalText, state.resultText);
       setStateStatus('completed');
       setResult(response.output);
+      if (response.totalChunks) document.querySelector('#articleProgressLabel').textContent = `Artigo concluído · ${response.totalChunks} blocos processados.`;
     }
   } catch (error) {
     console.error(error);
@@ -237,6 +276,7 @@ async function requestHumanization() {
     activeHumanizationController = null;
     state.isProcessing = false;
     setLoading(false);
+    lockArticleControls(false);
   }
 }
 
@@ -291,6 +331,7 @@ function bindEditor() {
     status: elements.documentImportStatus,
     onMessage: showToast,
     onImport: (text) => {
+      if (state.isProcessing) return;
       if (state.originalText) state.originalBackup = state.originalText;
       state.originalText = text;
       elements.originalText.value = text;
@@ -337,6 +378,25 @@ function bindEditor() {
 
   elements.checkAIButton.addEventListener('click', requestDetectorCheck);
   elements.humanizeButton.addEventListener('click', requestHumanization);
+  cancelArticle.addEventListener('click', cancelHumanization);
+  document.querySelector('#resumeArticle').addEventListener('click', async () => {
+    try {
+      const saved = await articleStore.read();
+      if (!saved?.text) return showToast('Sem artigo salvo', 'Nenhum processamento por blocos foi salvo neste navegador.', 'info');
+      state.originalBackup = state.originalText;
+      state.originalText = saved.text;
+      elements.originalText.value = saved.text;
+      state.preferences = { ...state.preferences, processingMode: saved.options.processingMode,
+        mode: saved.options.writingMode, language: saved.options.language,
+        instructions: saved.options.instructions, ...saved.options.adjustments };
+      restorePreferences(); persist(); updateInputState();
+      showToast('Artigo restaurado', 'Clique em Humanizar texto para continuar dos blocos salvos.', 'success');
+    } catch { showToast('Armazenamento indisponível', 'Não foi possível restaurar o artigo salvo.', 'error'); }
+  });
+  document.querySelector('#forgetArticle').addEventListener('click', async () => {
+    try { await articleStore.clear(); showToast('Cópia local removida', 'O checkpoint do artigo foi apagado deste navegador.', 'success'); }
+    catch { showToast('Não foi possível apagar', 'O armazenamento local está indisponível.', 'error'); }
+  });
 
   elements.copyButton.addEventListener('click', async () => {
     try {

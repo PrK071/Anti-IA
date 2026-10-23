@@ -26,6 +26,7 @@ test('rejeita arquivos vazios, binários disfarçados e textos sem conteúdo', a
 
 test('rejeita limites de arquivo e texto sem truncar o documento', async () => {
   await assert.rejects(readDocument({ name: 'grande.pdf', size: MAX_FILE_BYTES + 1, arrayBuffer() { throw new Error('Não deve ler'); } }), /20 MB/u);
-  await assert.rejects(readDocument(new File(['a'.repeat(50001)], 'grande.md')), /50.000 caracteres/u);
-  assert.equal((await readDocument(new File(['a'.repeat(50000)], 'limite.txt'))).length, 50000);
+  await assert.rejects(readDocument(new File(['palavra '.repeat(50001)], 'grande.md')), /50.000 palavras/u);
+  const article = 'palavra '.repeat(50000).trim();
+  assert.equal(await readDocument(new File([article], 'limite.txt')), article);
 });
